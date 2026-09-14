@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The standard — NAWI TestBench</title>
+<link rel="stylesheet" href="site.css">
+<style>
+  .page { padding: 40px 0 20px; }
+  .page .intro { color: var(--ink-2); max-width: var(--measure); margin: 8px 0 30px; font-size: 16px; }
+  .calc { display: grid; align-items: start; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 20px; margin-bottom: 36px; }
+  .calc .card h3 { margin-bottom: 14px; }
+  .calc .grid { grid-template-columns: 1fr 1fr; }
+  .result { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .result .big { font-family: var(--serif); font-size: 32px; line-height: 1.1; }
+  .result .big small { font-family: var(--sans); font-size: 14px; color: var(--ink-3); margin-left: 8px; }
+  .result .kv { grid-template-columns: 170px 1fr; }
+  .sect { margin-top: 36px; }
+  .sect h2 { margin-bottom: 6px; }
+  .sect .lede { color: var(--ink-2); max-width: var(--measure); margin-bottom: 16px; }
+  .cls-table td:first-child { font-weight: 500; }
+  .clause { color: var(--ink-3); font-size: 13px; }
+  .source { margin-top: 26px; color: var(--ink-3); font-size: 13px; }
+  .source a { color: var(--ink-2); }
+  @media (max-width: 900px) { .calc { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <a class="mark" href="/"><b>NAWI TestBench</b><span>OIML R 76 type evaluation</span></a>
+  <nav>
+    <a href="/">Overview</a>
+    <a href="/app">Workbench</a>
+    <a href="/standards" class="on">The standard</a>
+  </nav>
+</header>
+
+<main class="wrap page">
+  <h2 id="rs-label">Rule set</h2>
+  <p class="intro">Everything the evaluation engine knows about OIML R 76 is on this page, read live from the rule‑set file. Work out the permissible error for any instrument and load, then see where it sits on the envelope.</p>
+
+  <div class="calc">
+    <div class="card">
+      <h3>Permissible error for a load</h3>
+      <form class="grid" id="calc">
+        <div class="span2"><label>Accuracy class</label><select name="cls" id="calc-cls"></select></div>
+        <div><label>Max (g)</label><input name="max" type="number" step="any" value="30000"></div>
+        <div><label>e (g)</label><input name="e" type="number" step="any" value="5"></div>
+        <div class="span2"><label>Load applied (g)</label><input name="load" type="number" step="any" value="20000"></div>
+        <div class="span2"><label>Context</label>
+          <select name="context">
+            <option value="initial">Initial verification</option>
+            <option value="in-service">In service</option>
+          </select>
+        </div>
+      </form>
+      <div class="result" id="calc-out"></div>
+    </div>
+    <div class="card" id="calc-chart"></div>
+  </div>
+
+  <section class="sect">
+    <h2>Accuracy classes</h2>
+    <p class="lede">Which class an instrument can claim is fixed by its verification scale interval and its number of intervals. Both limits are checked when an instrument is registered.</p>
+    <div class="card"><table class="cls-table" id="classes"></table></div>
+  </section>
+
+  <section class="sect">
+    <h2>Maximum permissible errors</h2>
+    <p class="lede">Errors are limited in steps of the verification scale interval. The step boundaries depend on the class; the limits do not. In service every limit is doubled.</p>
+    <div class="card"><table id="bands"></table></div>
+  </section>
+
+  <section class="sect">
+    <h2>Tests and their criteria</h2>
+    <p class="lede">Each test's rule is stored with the clause it comes from. The engine reads these; it does not hard‑code them.</p>
+    <div class="card"><table id="tests"></table></div>
+    <p class="source" id="source"></p>
+  </section>
+</main>
+
+<footer class="colophon">
+  <span>NAWI TestBench · Smart India Hackathon 2026 · Problem statement SIH26035</span>
+  <span>Rule set OIML R 76‑1:2006, report layout R 76‑2:2007</span>
+</footer>
+
+<script src="chart.js"></script>
+<script src="standards.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in — NAWI TestBench</title>
+<link rel="stylesheet" href="site.css">
+<style>
+  body { background: var(--housing); color: var(--housing-ink); min-height: 100vh; }
+  .login { max-width: 980px; margin: 0 auto; padding: 70px 24px 60px; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 60px; align-items: center; }
+  .brand h1 { font-size: 54px; color: var(--housing-ink); max-width: 12em; }
+  .brand p { color: var(--housing-dim); font-size: 17px; margin-top: 18px; max-width: 34em; line-height: 1.55; }
+  .brand .lcd-frame { margin-bottom: 26px; }
+  .panel { background: var(--surface); color: var(--ink); border-radius: var(--radius-lg); padding: 28px 30px 26px; }
+  .panel h2 { font-size: 30px; margin-bottom: 4px; }
+  .panel .lede { color: var(--ink-2); margin-bottom: 20px; font-size: 14px; }
+  .panel .grid { grid-template-columns: 1fr; gap: 14px; }
+  .panel .actions { margin-top: 4px; justify-content: space-between; }
+  .roles { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
+  .roles table { font-size: 13px; margin-top: 6px; }
+  .roles td { padding: 5px 6px; border-bottom: 0; }
+  .roles code { font-family: ui-monospace, Menlo, monospace; background: var(--surface-2); padding: 1px 6px; border-radius: 3px; color: var(--ink); }
+  .roles button.link { color: var(--accent); }
+  @media (max-width: 860px) { .login { grid-template-columns: 1fr; gap: 30px; padding-top: 30px; } .brand h1 { font-size: 40px; } }
+</style>
+</head>
+<body>
+<header class="mast">
+  <a class="mark" href="/"><b>NAWI TestBench</b><span>OIML R 76 type evaluation</span></a>
+  <nav><a href="/">Overview</a><a href="/app" class="on">Workbench</a><a href="/standards">The standard</a></nav>
+</header>
+<main class="login">
+  <div class="brand">
+    <div class="lcd-frame" id="lcd"></div>
+    <h1>The report is where approvals fail. Not here.</h1>
+    <p>Record what the indicator shows. The workbench picks the permissible-error band, applies the changeover point, corrects for zero, and keeps the clause behind every verdict.</p>
+  </div>
+  <div class="panel">
+    <h2>Sign in</h2>
+    <p class="lede">Viewers read, engineers record, approvers sign and issue certificates.</p>
+    <form class="grid" id="form-login">
+      <div><label>Username</label><input name="username" autocomplete="username" required autofocus></div>
+      <div><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div>
+      <div class="actions"><button class="btn" type="submit">Sign in</button><span class="hint" id="login-msg"></span></div>
+    </form>
+    <div class="roles">Demonstration accounts. Click one to fill the form; change the passwords under Users once signed in as admin.
+      <table><tbody>
+        <tr><td><button class="link" data-u="admin">admin</button></td><td><code>admin123</code></td><td>Everything, including user management</td></tr>
+        <tr><td><button class="link" data-u="engineer">engineer</button></td><td><code>engineer123</code></td><td>Register instruments, record tests, close reports</td></tr>
+        <tr><td><button class="link" data-u="approver">approver</button></td><td><code>approver123</code></td><td>Review, approve, sign, issue certificates</td></tr>
+        <tr><td><button class="link" data-u="viewer">viewer</button></td><td><code>viewer123</code></td><td>Read-only access to the repository</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</main>
+<script src="readout.js"></script>
+<script>
+const f = document.getElementById('form-login');
+document.getElementById('lcd').innerHTML = sevenSegment('0.000', { digits: 6, height: 74, unit: 'kg', annunciators: [['ZERO', true], ['NET', false], ['STABLE', true]] });
+powerOn();
+document.querySelectorAll('[data-u]').forEach((b) => b.addEventListener('click', () => { f.username.value = b.dataset.u; f.password.value = `${b.dataset.u}123`; f.password.focus(); }));
+f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(f).entries());
+  const msg = document.getElementById('login-msg');
+  msg.textContent = 'Signing in…'; msg.style.color = '';
+  const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (res.ok) { location.href = '/app' + location.hash; return; }
+  const data = await res.json().catch(() => ({}));
+  msg.textContent = data.error || 'Sign in failed';
+  msg.style.color = 'var(--fail)';
+});
+</script>
+</body>
+</html>

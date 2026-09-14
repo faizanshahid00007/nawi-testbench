@@ -1,0 +1,20 @@
+{
+  "name": "nawi-testbench",
+  "version": "0.1.0",
+  "description": "Test report generation for non-automatic weighing instruments under OIML R 76",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/",
+    "seed": "node src/seed.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": "github:faizanshahid00007/nawi-testbench"
+}

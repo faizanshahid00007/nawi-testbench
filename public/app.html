@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workbench — NAWI TestBench</title>
+<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header class="mast">
+  <a class="mark" href="/"><b>NAWI TestBench</b><span>OIML R 76 type evaluation</span></a>
+  <nav>
+    <a href="/">Overview</a>
+    <a href="/app" class="on">Workbench</a>
+    <a href="/standards">The standard</a>
+    <span class="who" id="who"></span>
+  </nav>
+</header>
+
+<div class="wrap shell">
+  <aside class="side">
+    <button class="tab on" data-view="dashboard">Dashboard</button>
+    <button class="tab" data-view="tests">Tests</button>
+    <button class="tab" data-view="instruments">Instruments</button>
+    <button class="tab" data-view="new" data-role="engineer">New test</button>
+    <button class="tab" data-view="users" data-role="admin" hidden>Users</button>
+    <div class="side-foot" id="side-stats"></div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ============================ dashboard ============================ -->
+    <section class="view on" id="view-dashboard">
+      <div class="view-head">
+        <div>
+          <h2>Dashboard</h2>
+          <p class="lede">Testing activity and report status across the laboratory. Every figure below is live.</p>
+        </div>
+        <div class="actions" data-role="engineer">
+          <button class="btn ghost" data-goto="instruments">Add an instrument</button>
+          <button class="btn" data-goto="new">New test</button>
+        </div>
+      </div>
+      <div class="console" id="console"></div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head"><h3>Recent tests</h3><button class="link-btn" data-goto="tests">See all</button></div>
+          <div id="recent-table"></div>
+        </div>
+        <div class="card">
+          <h3>Outcomes</h3>
+          <div id="outcomes"></div>
+          <h4 style="margin-top:18px">Activity</h4>
+          <div id="activity"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== tests ============================== -->
+    <section class="view" id="view-tests">
+      <div class="view-head">
+        <div>
+          <h2>Tests</h2>
+          <p class="lede">Every test report, evaluated live against the rule set it was opened under. Scroll the list or narrow it down.</p>
+        </div>
+        <button class="btn" data-goto="new" data-role="engineer">New test</button>
+      </div>
+      <div class="card">
+        <form class="filters" id="filters">
+          <input name="q" placeholder="Search reference, certificate, applicant, manufacturer, model or serial">
+          <select name="status"><option value="">Any status</option><option value="draft">In progress</option><option value="complete">Closed, awaiting approval</option><option value="approved">Approved</option></select>
+          <select name="outcome"><option value="">Any outcome</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="incomplete">Incomplete</option></select>
+          <select name="accuracyClass"><option value="">Any class</option><option>I</option><option>II</option><option>III</option><option>IIII</option></select>
+          <select name="purpose"><option value="">Any purpose</option><option value="type-approval">Type approval</option><option value="verification">Verification</option></select>
+          <input name="from" type="date" title="Opened from">
+          <input name="to" type="date" title="Opened to">
+          <button class="btn ghost" type="submit">Apply</button>
+          <button class="btn quiet" type="reset" id="filters-reset">Clear</button>
+        </form>
+        <div id="sessions-table"></div>
+      </div>
+    </section>
+
+    <!-- =========================== instruments =========================== -->
+    <section class="view" id="view-instruments">
+      <div class="view-head">
+        <div>
+          <h2>Instruments</h2>
+          <p class="lede">Particulars are captured once and carried into every test the instrument appears in. Once an instrument is in a closed report its particulars are frozen.</p>
+        </div>
+        <button class="btn" id="btn-new-instrument" data-role="engineer">Add an instrument</button>
+      </div>
+
+      <div class="card" id="instrument-form-card" hidden>
+        <div class="card-head"><h3 id="instrument-form-title">Register an instrument</h3><button class="link-btn" id="instrument-form-cancel">Cancel</button></div>
+        <form id="form-instrument">
+          <input type="hidden" name="id">
+          <fieldset>
+            <legend>Applicant and identity</legend>
+            <div class="grid">
+              <div class="span2"><label>Applicant</label><input name="applicant" placeholder="Company applying for approval"></div>
+              <div class="span2"><label>Applicant address</label><input name="applicantAddress"></div>
+              <div class="span2"><label>Manufacturer</label><input name="manufacturer" required></div>
+              <div class="span2"><label>Manufacturer address</label><input name="manufacturerAddress"></div>
+              <div><label>Model / type designation</label><input name="model" required></div>
+              <div><label>Serial number of EUT</label><input name="serial" required></div>
+              <div><label>Instrument category</label>
+                <select name="instrumentType">
+                  <option>Counter scale</option><option>Retail scale (price computing)</option><option>Bench scale</option>
+                  <option>Platform scale</option><option>Floor scale</option><option>Weighbridge</option><option>Crane scale</option>
+                  <option>Hopper / tank scale</option><option>Laboratory balance</option><option>Personal weighing scale</option><option>Other</option>
+                </select>
+              </div>
+              <div><label>Indication</label>
+                <select name="indicatingType"><option value="digital">Digital</option><option value="analogue">Analogue</option></select>
+              </div>
+              <div><label>Electronic instrument</label>
+                <select name="electronic"><option value="1">Yes</option><option value="0">No</option></select>
+              </div>
+              <div><label>Range type</label>
+                <select name="rangeType"><option value="single">Single range</option><option value="multi-interval">Multi-interval</option><option value="multiple-range">Multiple range</option></select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Metrological characteristics</legend>
+            <div class="grid">
+              <div><label>Accuracy class</label>
+                <select name="accuracyClass">
+                  <option value="III" selected>III — Medium</option><option value="I">I — Special</option>
+                  <option value="II">II — High</option><option value="IIII">IIII — Ordinary</option>
+                </select>
+              </div>
+              <div><label>Units</label><select name="units"><option value="g" selected>g</option><option value="kg">kg</option></select></div>
+              <div><label>Max</label><input name="max" type="number" step="any" required></div>
+              <div><label>Min</label><input name="min" type="number" step="any" required></div>
+              <div><label>Verification scale interval e</label><input name="e" type="number" step="any" required></div>
+              <div><label>Actual scale interval d</label><input name="d" type="number" step="any" required></div>
+              <div><label>Max additive tare T = +</label><input name="tareMaxAdditive" type="number" step="any" placeholder="optional"></div>
+              <div><label>Max subtractive tare T = −</label><input name="tareMaxSubtractive" type="number" step="any" placeholder="optional"></div>
+              <div class="span4 preview" id="instrument-preview"></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Power supply and environment</legend>
+            <div class="grid">
+              <div><label>Power supply</label>
+                <select name="powerSupply">
+                  <option value="mains">Public mains (AC)</option><option value="external">External / plug-in supply</option>
+                  <option value="battery">Non-rechargeable battery</option><option value="vehicle-12">12 V vehicle battery</option><option value="vehicle-24">24 V vehicle battery</option>
+                </select>
+              </div>
+              <div><label>Nominal voltage U (V)</label><input name="nominalVoltage" type="number" step="any" placeholder="230"></div>
+              <div><label>Minimum operating voltage (V)</label><input name="minOperatingVoltage" type="number" step="any" placeholder="battery / DC supplies"></div>
+              <div><label>Frequency (Hz)</label><input name="frequency" type="number" step="any" placeholder="50"></div>
+              <div><label>Marked temperature limit, low (°C)</label><input name="tempMin" type="number" step="any" placeholder="blank = −10"></div>
+              <div><label>Marked temperature limit, high (°C)</label><input name="tempMax" type="number" step="any" placeholder="blank = +40"></div>
+              <div class="span2"><label>Limiting value of tilting</label><input name="limitingTilt" placeholder="e.g. level indicator ring, or 50/1000"></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Construction</legend>
+            <div class="grid">
+              <div><label>Software identification</label><input name="softwareVersion" placeholder="version shown at switch-on"></div>
+              <div><label>Load cell(s)</label><input name="loadCell" placeholder="make, model, count, Emax"></div>
+              <div class="span2"><label>Interfaces</label><input name="interfaces" placeholder="RS-232, USB, Ethernet, printer…"></div>
+              <div class="span4"><label>Notes</label><textarea name="notes" rows="2"></textarea></div>
+            </div>
+          </fieldset>
+
+          <div class="actions">
+            <button class="btn" type="submit" id="instrument-submit">Save instrument</button>
+            <button class="btn quiet" type="button" id="demo-instrument">Fill a worked example</button>
+          </div>
+          <div id="instrument-msg"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <input id="q-instruments" placeholder="Search manufacturer, model, serial, applicant or category">
+          <button class="btn ghost" id="q-instruments-go">Search</button>
+        </div>
+        <div id="instruments-table"></div>
+      </div>
+      <div id="instrument-detail"></div>
+    </section>
+
+    <!-- ============================== new test ============================== -->
+    <section class="view" id="view-new">
+      <div class="view-head">
+        <div>
+          <h2>New test</h2>
+          <p class="lede">A test is opened against one instrument, one rule set and one purpose. Those never change after opening; everything else is recorded as you go.</p>
+        </div>
+      </div>
+      <div class="card">
+        <form id="form-session">
+          <fieldset>
+            <legend>What is being tested</legend>
+            <div class="grid">
+              <div class="span2"><label>Instrument</label><select name="instrumentId" id="sel-instrument" required></select></div>
+              <div class="span2"><label>Rule set</label><select name="rulesetId" id="sel-ruleset"></select></div>
+              <div><label>Purpose</label>
+                <select name="purpose"><option value="type-approval" selected>Type approval</option><option value="verification">Verification</option></select>
+              </div>
+              <div><label>MPE context</label>
+                <select name="context"><option value="initial" selected>Initial verification</option><option value="in-service">In service (× 2)</option></select>
+              </div>
+              <div><label>Zero error E₀ before tests</label><input name="zeroError" type="number" step="any" value="0"></div>
+              <div><label>Application reference</label><input name="applicationRef" placeholder="applicant's file or letter no."></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Laboratory</legend>
+            <div class="grid">
+              <div class="span2"><label>Laboratory</label><input name="laboratory" required placeholder="Regional Reference Standards Laboratory, …"></div>
+              <div><label>Test engineer</label><input name="technician" required></div>
+              <div><label>Test date</label><input name="testDate" type="date"></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Environmental conditions at the start</legend>
+            <div class="grid env">
+              <div><label>Temperature (°C)</label><input name="temperature" type="number" step="any"></div>
+              <div><label>Relative humidity (%)</label><input name="humidity" type="number" step="any"></div>
+              <div><label>Barometric pressure (hPa)</label><input name="pressure" type="number" step="any"></div>
+              <div><label>Supply voltage (V)</label><input name="voltage" type="number" step="any"></div>
+              <div><label>Supply frequency (Hz)</label><input name="frequency" type="number" step="any"></div>
+            </div>
+            <p class="hint">Further readings can be added during the test; the report lists them all with time stamps.</p>
+          </fieldset>
+          <div class="actions"><button class="btn" type="submit">Open test</button></div>
+          <div id="session-msg"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- =============================== users =============================== -->
+    <section class="view" id="view-users">
+      <div class="view-head">
+        <div>
+          <h2>Users</h2>
+          <p class="lede">Roles are cumulative: a viewer reads, an engineer records and closes, an approver signs and issues certificates, an admin manages users.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Add a user</h3>
+        <form class="grid" id="form-user" style="margin-top:14px">
+          <div><label>Username</label><input name="username" required autocomplete="off"></div>
+          <div><label>Full name</label><input name="name" required></div>
+          <div><label>Role</label><select name="role"><option value="viewer">Viewer</option><option value="engineer" selected>Engineer</option><option value="approver">Approver</option><option value="admin">Admin</option></select></div>
+          <div><label>Password (8+ characters)</label><input name="password" type="password" required minlength="8" autocomplete="new-password"></div>
+          <div class="span4 actions"><button class="btn" type="submit">Create user</button></div>
+        </form>
+        <div id="user-msg"></div>
+      </div>
+      <div class="card" style="margin-top:20px"><div id="users-table"></div></div>
+    </section>
+
+    <section class="view" id="view-session"></section>
+
+  </main>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="chart.js"></script>
+<script src="readout.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

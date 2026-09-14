@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAWI TestBench — type evaluation reports under OIML R 76</title>
+<link rel="stylesheet" href="site.css">
+<style>
+  .hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: 56px; align-items: center; padding: 72px 0 64px; }
+  .hero h1 { max-width: 13em; }
+  .hero .sub { margin: 24px 0 30px; font-size: 18px; line-height: 1.5; color: var(--ink-2); max-width: 32em; }
+  .hero .actions { gap: 12px; }
+
+  .indicator { background: var(--housing); color: var(--housing-ink); border-radius: 10px; padding: 22px 22px 18px; box-shadow: 0 18px 50px rgba(23,32,42,0.22); }
+  .indicator .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+  .indicator .top .name { font-family: var(--serif); font-size: 22px; }
+  .indicator .top .name small { display: block; font-family: var(--sans); font-size: 13px; color: var(--housing-dim); margin-top: 2px; }
+  .indicator .lcd-frame { display: block; background: #121820; padding: 10px 12px 9px; }
+  .indicator .lcd-frame .lcd { width: 100%; height: auto !important; }
+  .indicator .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 14px 0 6px; }
+  .indicator .keys button { background: var(--housing-2); border: 1px solid var(--housing-line); color: var(--housing-ink); border-radius: 4px; padding: 9px 4px 8px; cursor: pointer; font-weight: 600; font-size: 13.5px; line-height: 1.15; }
+  .indicator .keys button small { display: block; font-weight: 400; color: var(--housing-dim); font-size: 11.5px; margin-top: 2px; }
+  .indicator .keys button:hover { border-color: var(--housing-dim); }
+  .indicator .keys button.on { background: var(--lcd); color: var(--lcd-seg); border-color: var(--lcd); }
+  .indicator .keys button.on small { color: var(--lcd-seg); opacity: .7; }
+  .indicator .gauge { color: var(--housing-dim); margin-top: 12px; }
+  .indicator .gauge .track { background: var(--housing-2); border-color: var(--housing-line); }
+  .indicator .gauge .band { background: rgba(143, 211, 168, 0.22); border-color: #8fd3a8; }
+  .indicator .gauge .zero { background: var(--housing-dim); }
+  .indicator .gauge .needle { background: var(--housing-ink); }
+  .indicator .gauge.fail .needle { background: #f0928a; }
+  .indicator .gauge .value b { color: var(--housing-ink); }
+  .indicator .gauge.fail .value b { color: #f0928a; }
+  .indicator .step { margin-top: 12px; font-size: 13px; color: var(--housing-dim); line-height: 1.5; border-top: 1px solid var(--housing-line); padding-top: 12px; }
+  .indicator .step b { color: var(--housing-ink); font-weight: 500; }
+  .indicator .step .mono { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+
+  section.band { padding: 56px 0; border-top: 1px solid var(--line); }
+  section.band h2 { margin-bottom: 8px; }
+  section.band > .lede { color: var(--ink-2); max-width: var(--measure); font-size: 16.5px; margin-bottom: 30px; }
+
+  .caps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 40px; }
+  .caps div { padding: 20px 0 22px; border-top: 1px solid var(--line-strong); }
+  .caps h3 { margin-bottom: 8px; }
+  .caps p { color: var(--ink-2); max-width: 36em; }
+  .caps .cl { display: block; margin-top: 10px; font-size: 12.5px; color: var(--ink-3); }
+
+  .method { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 56px; align-items: start; }
+  .method p { color: var(--ink-2); max-width: var(--measure); }
+  .method p + p { margin-top: 14px; }
+  .formula { font-family: var(--serif); font-size: 32px; margin: 18px 0; color: var(--ink); }
+  .formula i { color: var(--accent); }
+  .display { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px 22px; }
+  .display table td { font-size: 14px; }
+
+  .battery table { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+  .battery td, .battery th { padding: 10px 14px; }
+  .battery tr.g td { background: var(--surface-2); font-weight: 600; color: var(--ink-2); font-size: 13px; }
+  .battery td.cl { color: var(--ink-3); white-space: nowrap; font-size: 13px; }
+  .battery td.req { color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .flow div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px 20px 20px; position: relative; }
+  .flow div + div::before { content: ''; position: absolute; left: -12px; top: 50%; width: 12px; height: 1px; background: var(--line-strong); }
+  .flow h3 { font-size: 22px; margin-bottom: 6px; }
+  .flow p { color: var(--ink-2); font-size: 14px; }
+  .flow .who { display: inline-block; margin-top: 12px; background: var(--lcd); color: var(--lcd-seg); font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+
+  .data { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; align-items: start; }
+  .data p { color: var(--ink-2); max-width: var(--measure); }
+  .data p + p { margin-top: 14px; }
+  pre.rule { margin: 0; background: var(--housing); color: #dfe6e3; border-radius: var(--radius-lg); padding: 18px 20px; font: 13px/1.6 ui-monospace, 'SF Mono', Menlo, monospace; overflow-x: auto; }
+  pre.rule .k { color: #9fb8ad; } pre.rule .s { color: var(--lcd); } pre.rule .c { color: #7b8f88; }
+
+  .cta { margin-top: 20px; padding: 36px 40px; background: var(--housing); color: var(--housing-ink); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .cta p { color: var(--housing-dim); max-width: 42em; margin-top: 6px; }
+  .cta .btn.ghost { color: var(--housing-ink); border-color: var(--housing-line); }
+  .cta .btn.ghost:hover { background: var(--housing-2); }
+
+  @media (max-width: 960px) {
+    .hero, .method, .data { grid-template-columns: 1fr; gap: 28px; }
+    .hero { padding: 40px 0; }
+    .caps { grid-template-columns: 1fr; }
+    .flow { grid-template-columns: 1fr 1fr; }
+    .flow div + div::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <a class="mark" href="/"><b>NAWI TestBench</b><span>OIML R 76 type evaluation</span></a>
+  <nav>
+    <a href="/" class="on">Overview</a>
+    <a href="/app">Workbench</a>
+    <a href="/standards">The standard</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div>
+      <h1>Every weighing test, judged the way the Recommendation says.</h1>
+      <p class="sub">Laboratories evaluating non-automatic weighing instruments record what the indicator shows.
+        The software picks the permissible-error band, applies the changeover point, corrects for zero error,
+        runs the full R 76 battery and produces the report and the certificate, with the clause behind every verdict.</p>
+      <div class="actions">
+        <a class="btn lg" href="/app">Open the workbench</a>
+        <a class="btn lg ghost" href="/api/sessions/1/report.html" target="_blank" rel="noopener">See a generated report</a>
+      </div>
+    </div>
+    <div class="indicator" id="indicator">
+      <div class="top"><div class="name" id="ind-name">Worked example<small>loading…</small></div></div>
+      <div class="lcd-frame" id="ind-lcd"></div>
+      <div class="keys" id="ind-keys"></div>
+      <div id="ind-gauge"></div>
+      <div class="step" id="ind-step"></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <h2>What the software does</h2>
+    <p class="lede">Everything the Department of Consumer Affairs asked for in problem statement SIH26035, built the way a metrology laboratory works.</p>
+    <div class="caps">
+      <div><h3>Instruments and their specifications</h3><p>Applicant, manufacturer, model, serial, category, Max, Min, e, d, tare effects, power supply, temperature limits, software identification, load cells and interfaces. The class is checked against Table 3 as you type.</p><span class="cl">R 76-1 3.2, 3.9.2, 7.1</span></div>
+      <div><h3>Laboratory and environmental conditions</h3><p>Temperature, humidity, barometric pressure, supply voltage and frequency, recorded at the start, during and at the end of testing, each reading checked against the instrument's own limits.</p><span class="cl">R 76-1 3.9.2, 3.9.3, A.4.1</span></div>
+      <div><h3>Every prescribed test, with validation</h3><p>Seventeen data-entry forms, one per R 76 test, from weighing performance to span stability and the markings checklist. Impossible readings are refused; implausible ones are recorded with a warning that follows them into the report.</p><span class="cl">R 76-1 3.5 to 3.9, 5.3, 7.1, Annexes A and B</span></div>
+      <div><h3>Permissible errors and pass or fail, automatically</h3><p>The MPE band for every load, the changeover-point correction, the zero-error correction and the criterion for each test are applied the moment a reading is saved. The verdict for the point, the test and the whole evaluation update together.</p><span class="cl">R 76-1 3.5.1, 3.5.2, A.4.4.3</span></div>
+      <div><h3>Report, Word file, PDF and certificate</h3><p>The standardised report in the R 76-2 layout, as HTML, PDF and an editable Word document, with photographs embedded. A certificate of conformity is issued only when the whole battery passes and an approver has signed.</p><span class="cl">R 76-2 section 1</span></div>
+      <div><h3>Repository, search and roles</h3><p>Every test is kept, searchable by reference, certificate, applicant, instrument, status, outcome, class and date, with instrument-wise history. Viewers read, engineers record, approvers sign, admins manage users. Every action is in the audit trail.</p><span class="cl">Legal Metrology (General) Rules, 2011</span></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="method">
+      <div>
+        <h2>Errors finer than the display can show</h2>
+        <div class="formula"><i>P</i> = <i>I</i> + ½<i>e</i> − Δ<i>L</i>&nbsp;&nbsp;&nbsp;&nbsp;<i>E</i><sub>c</sub> = <i>E</i> − <i>E</i><sub>0</sub></div>
+        <p>A digital indicator only shows whole multiples of <i>e</i>, so subtracting the reading from the nominal
+          load cannot resolve an error smaller than one increment. But in the lowest band the tolerance is 0.5 <i>e</i>.
+          The Recommendation's answer is the changeover point: add weights of one tenth of <i>e</i> until the display
+          steps to the next value, and recover the indication before rounding from how much it took.</p>
+        <p>The result is then corrected by the zero error determined immediately beforehand, and it is that corrected
+          error, not the raw one, that is compared with the permissible error. Both steps are done for every
+          point where the engineer records an added load, both are shown in the report, and both appear on the live
+          readout before the point is saved.</p>
+      </div>
+      <div class="display">
+        <table>
+          <tbody>
+            <tr><td>Load applied</td><td class="r">2 000 g</td></tr>
+            <tr><td>Display reads</td><td class="r"><span id="ex-lcd" style="display:inline-block;width:150px;vertical-align:middle"></span></td></tr>
+            <tr><td>Added until it stepped up</td><td class="r">1.5 g</td></tr>
+            <tr><td>Indication before rounding</td><td class="r">2000 + 2.5 − 1.5 = <b>2001.0 g</b></td></tr>
+            <tr><td>Error</td><td class="r"><b>+1.0 g</b> = 0.2 <i>e</i></td></tr>
+            <tr><td>Permissible, class III, 400 <i>e</i></td><td class="r">± 2.5 g</td></tr>
+            <tr><td>Verdict</td><td class="r"><span class="badge b-pass">PASS</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="band battery">
+    <h2>The battery</h2>
+    <p class="lede">Read live from the rule set. Each test knows its clause, its criterion, which instruments it applies to and whether type approval or verification requires it.</p>
+    <table id="battery"><tbody><tr><td class="empty">Loading the rule set…</td></tr></tbody></table>
+  </section>
+
+  <section class="band">
+    <h2>From first reading to certificate</h2>
+    <p class="lede">A test moves through four states. Each transition is recorded with who did it and when.</p>
+    <div class="flow">
+      <div><h3>Recording</h3><p>An engineer opens the test against one instrument, one rule set and one purpose, records conditions and observations, attaches photographs.</p><span class="who">engineer</span></div>
+      <div><h3>Closed</h3><p>Observations are frozen and the outcome at closing is filed. Closing an incomplete battery has to be done deliberately.</p><span class="who">engineer</span></div>
+      <div><h3>Approved and signed</h3><p>An approving officer reviews the report and signs it. The signature is a SHA-256 hash over every observation, verdict and the approval itself.</p><span class="who">approver</span></div>
+      <div><h3>Certified</h3><p>If the whole battery passed, a numbered certificate of conformity is issued. Anyone can confirm it at a public verification address.</p><span class="who">automatic</span></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="data">
+      <div>
+        <h2>The standard is data, not code</h2>
+        <p>Accuracy classes, permitted ranges of <i>n</i>, the band tables, the in-service multiplier, the supply-voltage
+          rules and each test's criterion live in a versioned rule-set file. A new edition of R 76 is a new file. Every
+          report stores the identifier of the rule set it was judged under, so a report from years ago can be recomputed
+          exactly as it was.</p>
+        <p>Each constant carries the clause it was taken from, checked against R 76-1 Edition 2006 and R 76-2 Edition 2007.
+          The rule set can be inspected, and the permissible error for any load worked out, on <a href="/standards">the standard page</a>.</p>
+      </div>
+<pre class="rule"><span class="c">// rulesets/oiml-r76-2006.json</span>
+<span class="k">"III"</span>: {
+  <span class="k">"designation"</span>: <span class="s">"Medium accuracy"</span>,
+  <span class="k">"clause"</span>: <span class="s">"3.2 Table 3"</span>,
+  <span class="k">"bands"</span>: [[0, 500, 0.5], [500, 2000, 1.0], [2000, 10000, 1.5]]
+},
+<span class="k">"creep"</span>: {
+  <span class="k">"clause"</span>: <span class="s">"3.9.4.1 / A.4.11.1"</span>,
+  <span class="k">"within30MinE"</span>: 0.5, <span class="k">"between15and30E"</span>: 0.2,
+  <span class="k">"fallbackHours"</span>: 4,
+  <span class="k">"appliesToClasses"</span>: [<span class="s">"II"</span>, <span class="s">"III"</span>, <span class="s">"IIII"</span>]
+}</pre>
+    </div>
+  </section>
+
+  <div class="cta">
+    <div>
+      <h3>Try it on the worked examples</h3>
+      <p>One class III counter scale whose 20 kg point exceeds the permissible error, and one platform scale carried through the whole battery, approved and certified. Sign in as an engineer to record, or as an approver to sign.</p>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" href="/verify/NAWI-C%2F2026%2F0001">Verify a certificate</a>
+      <a class="btn brass" href="/app">Open the workbench</a>
+    </div>
+  </div>
+
+</main>
+
+<footer class="colophon">
+  <span>NAWI TestBench for Smart India Hackathon 2026, problem statement SIH26035, Ministry of Consumer Affairs, Food &amp; Public Distribution</span>
+  <span>Rule set OIML R 76-1:2006, report layout R 76-2:2007</span>
+</footer>
+
+<script src="chart.js"></script>
+<script src="readout.js"></script>
+<script>
+(async () => {
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmt = (v) => Number(v).toLocaleString('en-IN', { maximumFractionDigits: 3 });
+  document.getElementById('ex-lcd').innerHTML = sevenSegment('2000', { digits: 5, height: 30, unit: 'g' });
+
+  const ruleset = await fetch('/api/rulesets/oiml-r76-2006').then((r) => r.json());
+
+  /* battery table */
+  const groups = ruleset.groups || [];
+  document.getElementById('battery').innerHTML = `<thead><tr><th>Test</th><th>Criterion</th><th>Clause</th><th>Required for</th></tr></thead><tbody>${groups.map((g) =>
+    `<tr class="g"><td colspan="4">${esc(g.label)}</td></tr>` + g.tests.map((k) => { const t = ruleset.tests[k]; return `<tr><td><b>${esc(t.label)}</b></td><td>${esc(t.description)}</td><td class="cl">${esc(t.clause)}</td><td class="req">${(t.requiredFor || []).map((p) => p === 'type-approval' ? 'Type approval' : 'Verification').join(', ')}</td></tr>`; }).join('')).join('')}</tbody>`;
+
+  /* interactive indicator */
+  const demo = {
+    name: 'Avery India CS-30', sub: 'class III, Max 30 kg, e = d = 5 g, initial verification', cls: 'III', e: 5, n: 6000, units: 'g',
+    points: [
+      { label: 'Min', load: 100, indication: 100, addedLoad: 1.5 },
+      { label: '2 kg', load: 2000, indication: 2000, addedLoad: 1.5 },
+      { label: '10 kg', load: 10000, indication: 10000, addedLoad: 2.0 },
+      { label: '20 kg', load: 20000, indication: 20010, addedLoad: null },
+      { label: 'Max', load: 30000, indication: 30000, addedLoad: 2.5 }
+    ]
+  };
+  const mpeFor = (cls, e, load) => { const m = load / e; const b = ruleset.classes[cls].bands.find(([lo, hi]) => (lo === 0 ? m >= 0 : m > lo) && (hi === null || m <= hi)); return b ? b[2] * e : null; };
+  const evalPt = (p) => { const P = p.addedLoad === null ? p.indication : p.indication + 0.5 * demo.e - p.addedLoad; const error = P - p.load; const mpe = mpeFor(demo.cls, demo.e, p.load); return { ...p, corrected: P, error, mpe, loadInE: p.load / demo.e, errorInE: error / demo.e, verdict: Math.abs(error) <= mpe + 1e-9 ? 'pass' : 'fail' }; };
+  const pts = demo.points.map(evalPt);
+  document.getElementById('ind-name').innerHTML = `${esc(demo.name)}<small>${esc(demo.sub)}</small>`;
+  const keys = document.getElementById('ind-keys');
+  keys.innerHTML = pts.map((p, i) => `<button data-i="${i}">${esc(p.label)}<small>${fmt(p.load)} g</small></button>`).join('');
+  let current = 3;
+  function draw(i) {
+    current = i;
+    const p = pts[i];
+    keys.querySelectorAll('button').forEach((b) => b.classList.toggle('on', Number(b.dataset.i) === i));
+    document.getElementById('ind-lcd').innerHTML = sevenSegment(String(p.indication), { digits: 6, height: 84, unit: 'g', annunciators: [['ZERO', false], ['NET', false], ['STABLE', true]] });
+    document.getElementById('ind-gauge').innerHTML = mpeGauge({ error: p.error, mpe: p.mpe, e: demo.e, units: 'g', width: 9999 });
+    document.getElementById('ind-step').innerHTML = p.addedLoad === null
+      ? `No changeover recorded, so the error is the raw difference: <span class="mono">${fmt(p.indication)} − ${fmt(p.load)} = <b>${p.error > 0 ? '+' : ''}${fmt(p.error)} g</b></span>. At ${fmt(p.loadInE)} e the band allows ± 1.5 e = ± ${fmt(p.mpe)} g. <b>Outside the limit.</b>`
+      : `Added ${fmt(p.addedLoad)} g until the display stepped, so <span class="mono">P = ${fmt(p.indication)} + ${fmt(0.5 * demo.e)} − ${fmt(p.addedLoad)} = ${fmt(p.corrected)} g</span> and the error is <b>${p.error > 0 ? '+' : ''}${fmt(p.error)} g</b>, against ± ${fmt(p.mpe)} g for a load of ${fmt(p.loadInE)} e. <b>Within the limit.</b>`;
+  }
+  keys.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) draw(Number(b.dataset.i)); });
+  draw(current);
+  powerOn(document.getElementById('indicator'));
+})();
+</script>
+</body>
+</html>

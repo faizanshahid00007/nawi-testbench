@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nawi-testbench
+    runtime: docker
+    plan: free
+    healthCheckPath: /login
+    envVars:
+      - key: PORT
+        value: "4178"
+      - key: NAWI_DB
+        value: /data/nawi.db

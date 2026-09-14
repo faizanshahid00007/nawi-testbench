@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>NAWI TestBench — User Guide</title>
+<style>
+@page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+@page :first { margin: 0; }
+:root { --ink:#17202a; --soft:#4b5865; --faint:#7e8b97; --accent:#0e5a8a; --line:#d3dae0; --tint:#f4f6f7; --housing:#1b222b; --lcd:#c9d5b2; --pass:#1e7a4e; --fail:#b3261e; --warn:#9a6700; }
+* { box-sizing: border-box; }
+body { margin:0; font: 10.4pt/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); }
+h1 { font-size: 24pt; font-weight: 600; margin: 0 0 3mm; letter-spacing: -0.01em; }
+h2 { font-size: 16pt; font-weight: 600; color: var(--accent); margin: 9mm 0 3mm; padding-bottom: 1.5mm; border-bottom: 1.5px solid var(--accent); break-after: avoid; }
+h3 { font-size: 12pt; font-weight: 600; margin: 6mm 0 2mm; break-after: avoid; }
+h4 { font-size: 10.6pt; font-weight: 600; margin: 4mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.5mm; }
+ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+li { margin-bottom: 1.2mm; }
+li > ul { margin-top: 1mm; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.4pt; break-inside: auto; }
+th, td { text-align: left; vertical-align: top; padding: 1.6mm 2.2mm; border-bottom: 1px solid var(--line); }
+th { background: var(--tint); font-weight: 600; color: var(--soft); font-size: 8.8pt; }
+tr { break-inside: avoid; }
+code, kbd { font-family: Menlo, Consolas, monospace; font-size: 9pt; background: var(--tint); padding: 0.2mm 1.2mm; border-radius: 2px; }
+pre.flow { white-space: pre; font-size: 8.2pt; }
+pre { background: var(--housing); color: #e6ebef; padding: 3mm 4mm; border-radius: 3px; font: 9pt/1.5 Menlo, Consolas, monospace; margin: 2mm 0 4mm; white-space: pre-wrap; }
+figure { margin: 3mm 0 5mm; break-inside: avoid; }
+figure img { width: 100%; display: block; border: 1px solid var(--line); border-radius: 3px; }
+figure.half img { width: 62%; margin: 0 auto; }
+figure.narrow img { width: 48%; margin: 0 auto; }
+figcaption { font-size: 8.8pt; color: var(--faint); margin-top: 1.5mm; }
+.cover { height: 297mm; background: var(--housing); color: #e6ebef; padding: 28mm 22mm; position: relative; break-after: page; }
+.cover .eyebrow { color: #93a0ad; font-size: 10pt; letter-spacing: 0.04em; }
+.cover h1 { font-size: 40pt; margin: 8mm 0 4mm; color: #fff; line-height: 1.05; }
+.cover .sub { font-size: 14pt; color: #b9c4cf; max-width: 120mm; line-height: 1.45; }
+.cover .lcd { display: inline-block; background: var(--lcd); color: #1c2419; font: 700 30pt Menlo, Consolas, monospace; letter-spacing: 0.08em; padding: 4mm 8mm; border-radius: 2px; margin-top: 16mm; border: 6px solid #252e39; }
+.cover .meta { position: absolute; bottom: 22mm; left: 22mm; right: 22mm; color: #93a0ad; font-size: 9.6pt; border-top: 1px solid #38424f; padding-top: 4mm; display: flex; justify-content: space-between; }
+.note { border-left: 3px solid var(--accent); background: var(--tint); padding: 2.5mm 4mm; margin: 3mm 0 4mm; break-inside: avoid; }
+.note.warn { border-left-color: var(--warn); }
+.badge { display: inline-block; font-size: 8pt; font-weight: 700; padding: 0.3mm 1.8mm; border-radius: 2px; letter-spacing: 0.03em; }
+.b-pass { background: #dcefe3; color: var(--pass); } .b-fail { background: #f8dfdc; color: var(--fail); } .b-inc { background: #f8ecd0; color: var(--warn); } .b-na { background: #e3e8ec; color: var(--faint); }
+.toc ol { columns: 2; column-gap: 10mm; padding-left: 5mm; }
+.toc li { break-inside: avoid; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+.steps li { margin-bottom: 2mm; }
+.kv td:first-child { width: 34%; font-weight: 600; color: var(--soft); }
+.small { font-size: 9pt; color: var(--soft); }
+</style></head><body>
+
+<section class="cover">
+  <div class="eyebrow">NAWI TestBench · Smart India Hackathon 2026 · Problem statement SIH26035</div>
+  <h1>User Guide</h1>
+  <p class="sub">How to use the prototype: registering instruments, opening tests, recording OIML R 76 observations, closing and approving reports, and issuing certificates of conformity.</p>
+  <div class="lcd">2 0 0 1 0</div>
+  <div class="meta"><span>Prototype version 0.1 · September 2026</span><span>Rule set OIML R 76-1:2006 (E) · Report layout R 76-2:2007 (E)</span></div>
+</section>
+
+<h1>Contents</h1>
+<div class="toc"><ol>
+<li>What the prototype is</li><li>Starting the software</li><li>Signing in and roles</li><li>The four pages</li>
+<li>Dashboard</li><li>Instruments</li><li>Opening a new test</li><li>The report workspace</li>
+<li>Recording observations and the live readout</li><li>Test-by-test instructions</li><li>Checklists</li><li>Laboratory environment</li>
+<li>Photographs, documents and remarks</li><li>Closing, approval and certificates</li><li>Reports and exports</li><li>Finding tests again</li>
+<li>Users and passwords</li><li>The standard page</li><li>Worked examples</li><li>Troubleshooting</li><li>Glossary</li>
+</ol></div>
+
+<h2>1 &nbsp;What the prototype is</h2>
+<p>NAWI TestBench is a web application for laboratories that evaluate non-automatic weighing instruments (NAWIs) under OIML Recommendation R 76. The engineer records what the indicator shows; the software picks the permissible-error band for every load, applies the changeover-point correction and the zero-error correction, judges every test against its R 76 criterion, and produces the standardised report and, when everything passes, a certificate of conformity.</p>
+<p>Everything the software knows about R 76 is stored as data in a versioned rule-set file. Every report remembers which rule set it was judged under, so a revised Recommendation becomes a new file, not new software.</p>
+<figure><img src="img/01-landing.png" alt="Overview page"><figcaption>The overview page. The indicator on the right is live: press a test load to see the reading, the corrected error and whether it falls inside the permissible band.</figcaption></figure>
+
+<h2>2 &nbsp;Starting the software</h2>
+<p>The prototype runs on any computer with Node.js 20 or later. PDF export additionally needs Google Chrome, Chromium or Microsoft Edge installed; without one, HTML and Word exports still work.</p>
+<pre>cd ~/dev/nawi
+npm install        # first time only
+npm run seed       # first time only: two worked examples and the demo accounts
+npm start          # then open http://localhost:4178</pre>
+<p>Leave the terminal window open while you use the software; closing it stops the server. To run it permanently, see <code>docs/deployment.md</code>.</p>
+<div class="note"><b>If the page does not open</b>, the server is not running. Run <code>npm start</code> again. If it reports that the port is in use, another copy is already running; stop that one first or start this one with <code>PORT=5000 npm start</code>.</div>
+
+<h2>3 &nbsp;Signing in and roles</h2>
+<p>Open <code>http://localhost:4178/login</code>. Four demonstration accounts exist after seeding. Click a username on the login page to fill the form.</p>
+<table><thead><tr><th>Username</th><th>Password</th><th>Role</th><th>What the role can do</th></tr></thead><tbody>
+<tr><td><code>viewer</code></td><td><code>viewer123</code></td><td>Viewer</td><td>Read every test, instrument and report; download exports. Cannot change anything.</td></tr>
+<tr><td><code>engineer</code></td><td><code>engineer123</code></td><td>Engineer</td><td>Everything a viewer can, plus register and edit instruments, open tests, record observations, environment readings, checklists and attachments, close and reopen reports.</td></tr>
+<tr><td><code>approver</code></td><td><code>approver123</code></td><td>Approver</td><td>Everything an engineer can, plus approve and sign closed reports, return them to the engineer, withdraw approvals. Approval issues the certificate.</td></tr>
+<tr><td><code>admin</code></td><td><code>admin123</code></td><td>Admin</td><td>Everything, plus the Users page: create accounts, change roles, disable accounts, reset passwords.</td></tr>
+</tbody></table>
+<figure><img src="img/02-login.png" alt="Login page"><figcaption>The sign-in page. Sessions last 12 hours; sign out from the masthead.</figcaption></figure>
+<div class="note warn"><b>Change the demonstration passwords</b> before showing the software outside the team. Sign in as <code>admin</code>, open Users and use “reset password” on each account.</div>
+
+<h2>4 &nbsp;The four pages</h2>
+<table><thead><tr><th>Address</th><th>Page</th><th>Who</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>/</code></td><td>Overview</td><td>Anyone</td><td>Explains the method, the battery and the workflow; interactive indicator.</td></tr>
+<tr><td><code>/app</code></td><td>Workbench</td><td>Signed-in users</td><td>Dashboard, Tests, Instruments, New test, Users. This is where all work happens.</td></tr>
+<tr><td><code>/standards</code></td><td>The standard</td><td>Anyone</td><td>Everything the engine knows about R 76, read live from the rule set, plus a permissible-error calculator.</td></tr>
+<tr><td><code>/verify/&lt;certificate no.&gt;</code></td><td>Verify</td><td>Anyone</td><td>Confirms whether a certificate number is genuine and still valid.</td></tr>
+</tbody></table>
+<p>Inside the workbench, the dark rail on the left switches between views. The small readouts at the bottom of the rail always show how many tests are in progress, awaiting approval and certified.</p>
+
+<h2>5 &nbsp;Dashboard</h2>
+<figure><img src="img/03-dashboard.png" alt="Dashboard"><figcaption>The dashboard as the engineer sees it.</figcaption></figure>
+<ul>
+<li><b>Console readouts</b>: tests on record, in progress, awaiting approval, certificates issued. Click a readout to open the Tests list filtered to that status.</li>
+<li><b>New test</b> and <b>Add an instrument</b> buttons (engineer and above).</li>
+<li><b>Recent tests</b>: the eight most recent reports. Click a row to open it.</li>
+<li><b>Outcomes</b>: how many tests currently pass, fail or are incomplete, and how many are certified. Below it, tests opened per month, per accuracy class, and totals of observations and attachments.</li>
+</ul>
+
+<h2>6 &nbsp;Instruments</h2>
+<p>An instrument is registered once and reused in every test made on it. Open <b>Instruments</b> in the rail and press <b>Add an instrument</b>.</p>
+<figure><img src="img/05-instrument-form.png" alt="Instrument form"><figcaption>The registration form after “Fill a worked example”. The grey strip under the metrological fields is the live class check.</figcaption></figure>
+<h3>6.1 The fields</h3>
+<table class="kv"><tbody>
+<tr><td>Applicant, applicant address</td><td>The company applying for approval. Printed on the report and certificate. Leave blank if the manufacturer is the applicant.</td></tr>
+<tr><td>Manufacturer, manufacturer address</td><td>Required. Printed as the manufacturer's mark.</td></tr>
+<tr><td>Model / type designation, Serial number of EUT</td><td>Required. EUT is the equipment under test.</td></tr>
+<tr><td>Instrument category</td><td>Counter scale, platform scale, weighbridge and so on. Descriptive only.</td></tr>
+<tr><td>Indication, Electronic instrument</td><td>Digital or analogue; electronic yes or no. Warm-up, voltage and span-stability tests apply to electronic instruments only.</td></tr>
+<tr><td>Range type</td><td>Single range, multi-interval or multiple range. The prototype evaluates single-range instruments fully; the others are recorded for the report.</td></tr>
+<tr><td>Accuracy class</td><td>I, II, III or IIII. Decides the MPE bands and which tests apply.</td></tr>
+<tr><td>Units</td><td>g or kg. Every load and reading for this instrument is entered in this unit.</td></tr>
+<tr><td>Max, Min</td><td>Maximum and minimum capacity.</td></tr>
+<tr><td>Verification scale interval e, Actual scale interval d</td><td>d is what the display steps in; e is the interval used for classification. Usually equal on class III instruments.</td></tr>
+<tr><td>Max additive / subtractive tare</td><td>T = + and T = − from the data plate. Used to check tare entries and to suggest the eccentricity load.</td></tr>
+<tr><td>Power supply, nominal voltage, minimum operating voltage, frequency</td><td>Decide the voltage limits for the voltage-variation test (3.9.3). Mains: 0.85 U to 1.10 U. External or battery supplies need the minimum operating voltage.</td></tr>
+<tr><td>Marked temperature limits</td><td>Leave blank for the default −10 / +40 °C. If the instrument is marked with special limits, enter both; class III needs a span of at least 30 °C.</td></tr>
+<tr><td>Limiting value of tilting</td><td>How the tilt limit is defined (level indicator, tilt sensor, or 50/1000). Printed with the tilting test.</td></tr>
+<tr><td>Software identification, load cells, interfaces, notes</td><td>Printed in the general-information block of the report.</td></tr>
+</tbody></table>
+<h3>6.2 What is checked as you type</h3>
+<p>The grey strip below the metrological fields shows <b>n = Max / e</b> and whether it lies in the range Table 3 permits for the class, the lowest Min allowed, whether the changeover method is required (d &gt; 0.2 e), and any findings. An instrument can be saved with findings, but findings block the certificate, so fix them if they are data-entry mistakes.</p>
+<h3>6.3 Viewing and editing</h3>
+<p>Click any row in the instrument list to open its detail panel with all particulars and its <b>test history</b>. <b>Edit particulars</b> is available until the instrument appears in a closed or approved report; after that it is frozen so old reports stay truthful. <b>New test on this instrument</b> opens the New test form with the instrument pre-selected.</p>
+<figure><img src="img/06-instrument-detail.png" alt="Instrument detail"><figcaption>Instrument detail with derived values and test history.</figcaption></figure>
+
+<h2>7 &nbsp;Opening a new test</h2>
+<figure><img src="img/07-new-test.png" alt="New test form"><figcaption>The New test form.</figcaption></figure>
+<table class="kv"><tbody>
+<tr><td>Instrument</td><td>Pick the registered instrument.</td></tr>
+<tr><td>Rule set</td><td>The edition of R 76 to judge against. Fixed once the test is opened.</td></tr>
+<tr><td>Purpose</td><td><b>Type approval</b> requires the full battery of 17 tests. <b>Verification</b> requires the six metrological tests and the markings checklist.</td></tr>
+<tr><td>MPE context</td><td><b>Initial verification</b> uses the Table 6 limits; <b>In service</b> doubles them (3.5.2).</td></tr>
+<tr><td>Zero error E₀ before tests</td><td>The zero error determined at no load before testing. Every corrected error subtracts it unless a point records its own E₀.</td></tr>
+<tr><td>Application reference</td><td>The applicant's file or letter number, printed on the report.</td></tr>
+<tr><td>Laboratory, Test engineer, Test date</td><td>Printed on the report and certificate. The engineer defaults to your name.</td></tr>
+<tr><td>Environmental conditions at the start</td><td>Optional; saved as the first environment reading.</td></tr>
+</tbody></table>
+<p>Press <b>Open test</b>. A reference like <code>NAWI/2026/0003</code> is assigned and the report workspace opens.</p>
+
+<h2>8 &nbsp;The report workspace</h2>
+<figure><img src="img/08-workspace-top.png" alt="Report workspace"><figcaption>Top of a report in progress. The 20 kg point of this worked example is outside the permissible error, so the outcome reads FAIL.</figcaption></figure>
+<p>From top to bottom:</p>
+<ol>
+<li><b>Header</b>: reference, dates, instrument, status badges, and the buttons <b>All tests</b>, <b>Report</b> (HTML in a new tab), <b>Word</b>, <b>PDF</b> and, once issued, <b>Certificate</b>.</li>
+<li><b>Error envelope</b>: every load-based point plotted against the MPE staircase for the class. Black dots are within the limit, red dots outside; hover a dot for its values.</li>
+<li><b>Outcome panel</b>: the LCD reads PASS, FAIL or ---- (incomplete), with DRAFT, CLOSED, APPROVED and CERT annunciators. Below it, what the purpose still requires and whether the report is eligible for a certificate.</li>
+<li><b>Workflow box</b>: the action available at this stage (close, approve, return, reopen). See section 14.</li>
+<li><b>Instrument and Evaluation particulars</b>.</li>
+<li><b>Laboratory environment</b> readings with an add form (section 12).</li>
+<li><b>Test groups</b>: Metrological performance, Influence factors, Time and stability, Construction and markings. Each test is a collapsible block with its clause, its verdict badge and its observation count. A coloured left edge repeats the verdict.</li>
+<li><b>Photographs and documents</b>, <b>Remarks</b>, <b>Audit trail</b>.</li>
+<li><b>Navigator</b> (right column, stays in view while scrolling): progress bar and a link to every test with a verdict dot. Click a test to jump to it and open it.</li>
+</ol>
+<p>Everything is recalculated every time an observation is saved or removed. There is no “calculate” button.</p>
+
+<h2>9 &nbsp;Recording observations and the live readout</h2>
+<p>Open a test block and use the <b>Record an observation</b> form at its bottom. Fields common to the load-based tests:</p>
+<table class="kv"><tbody>
+<tr><td>Point / Position / Run</td><td>A label for the report: “10 kg”, “Segment 2”, “Run 3”. Eccentricity offers the four segments; repeatability suggests the next run number.</td></tr>
+<tr><td>Direction</td><td>Increasing or decreasing load (A.4.4.1 asks for both).</td></tr>
+<tr><td>Load</td><td>The test load applied, in the instrument's unit.</td></tr>
+<tr><td>Tare</td><td>Tare test only: the tare value in use. The net load is judged.</td></tr>
+<tr><td>Indication</td><td>What the display shows.</td></tr>
+<tr><td>Added until display stepped, ΔL</td><td>Changeover-point method: the small weights added until the display moved up one interval. Leave blank to use the raw reading. Required in spirit when d &gt; 0.2 e.</td></tr>
+<tr><td>Zero error E₀ at this point</td><td>Overrides the session E₀ for this point.</td></tr>
+<tr><td>Remark</td><td>Free text printed under the row in the report.</td></tr>
+</tbody></table>
+<figure><img src="img/10-live-readout.png" alt="Live readout"><figcaption>As you type, the readout on the right shows the indication, the corrected error on a gauge against ± MPE, and the arithmetic. Here 20 010 g at a 20 kg load gives +10 g against ± 7.5 g: outside.</figcaption></figure>
+<h3>9.1 What happens when you press Record</h3>
+<ul>
+<li><b>Errors</b> stop the save and are shown under the form: load above Max (+ T), negative load, tare above T, missing second indication, missing time, a creep reading at a different load, a wrong tilt position.</li>
+<li><b>Warnings</b> let the save go through but are stored with the observation, shown as ⚠ next to the point, listed under the table and printed in the report: indication not a multiple of d, ΔL larger than one e, E₀ larger than one e, load below Min, a temperature or voltage outside the instrument's limits, a duplicate label.</li>
+<li>The table, the envelope, the outcome panel and the navigator update at once.</li>
+</ul>
+<figure><img src="img/11-weighing-table.png" alt="Weighing table"><figcaption>A weighing table: I, ΔL, corrected indication, E, E₀, Ec, MPE, band and verdict for every point. “remove” deletes a point while the report is open.</figcaption></figure>
+<h3>9.2 The arithmetic behind each row</h3>
+<pre>P  = I + ½e − ΔL      indication before rounding (blank ΔL → P = I)
+E  = P − L            error of indication
+Ec = E − E0           corrected error, compared with the MPE for L
+MPE from Table 6:  ±0.5 e, ±1 e or ±1.5 e depending on L / e and the class; × 2 in service</pre>
+
+<h2>10 &nbsp;Test-by-test instructions</h2>
+<p>Each test block explains its criterion and, where the standard prescribes them, the loads or sequence to use. This table summarises what to enter.</p>
+<table><thead><tr><th style="width:19%">Test (clause)</th><th style="width:24%">Applies to</th><th>What to record</th><th style="width:27%">How it is judged</th></tr></thead><tbody>
+<tr><td>Weighing performance (3.5.1, A.4.4.1)</td><td>All</td><td>At least 10 loads (type approval) or 5 (verification) from zero to Max and back, including Min, Max and the loads where the MPE changes. The form lists those loads for this instrument.</td><td>|Ec| ≤ MPE for every point. The load plan under the table says what is still missing.</td></tr>
+<tr><td>Eccentricity (3.6.2, A.4.7)</td><td>All</td><td>One third of (Max + T) on each of the four segments. Choose the segment from the list.</td><td>|Ec| ≤ MPE at each segment.</td></tr>
+<tr><td>Repeatability (3.6.1, A.4.10)</td><td>All</td><td>Type approval: two series, about 50 % of Max and near Max, 10 weighings each when Max &lt; 1000 kg. Verification: one series near 0.8 Max, 3 runs (III, IIII) or 6 (I, II).</td><td>Spread of the series ≤ MPE at that load; incomplete until the run count is met.</td></tr>
+<tr><td>Discrimination (3.8.2.2)</td><td>d ≥ 5 mg</td><td>Load, indication before, indication after gently adding 1.4 d.</td><td>Indication must change by at least 1 d.</td></tr>
+<tr><td>Tare device (3.5.3.3, 4.6.3)</td><td>All</td><td>Gross load, tare value, indication.</td><td>Net error ≤ MPE for the net load.</td></tr>
+<tr><td>Zero-setting accuracy (4.5.2)</td><td>All</td><td>Indication after zero setting at nominal 0.</td><td>|error| ≤ 0.25 e.</td></tr>
+<tr><td>Tilting (3.9.1.1, A.5.1)</td><td>II, III, IIII</td><td>Record the no-load indication in the reference (level) position first. Then in each tilted position: no load, self-indication capacity and Max.</td><td>No-load shift ≤ 2 e (class II exempt); loaded |Ec| ≤ MPE.</td></tr>
+<tr><td>Warm-up time (5.3.5, A.5.2)</td><td>Electronic</td><td>Load near Max at 0, 5, 15 and 30 min after switch-on, each with its own E₀.</td><td>|Ec| ≤ MPE at every time; incomplete until all four are recorded.</td></tr>
+<tr><td>Static temperatures (3.9.2, A.5.3.1)</td><td>All</td><td>Weighing points with the chamber temperature as the condition: reference, high, low, 5 °C if low ≤ 0 °C, reference. The form suggests the temperatures for this instrument.</td><td>|Ec| ≤ MPE under every condition; at least four conditions.</td></tr>
+<tr><td>Temperature effect on no-load (3.9.2.3)</td><td>All</td><td>Zero indication at each temperature, in the order tested.</td><td>Change ≤ 1 e per 5 °C (per 1 °C for class I) between consecutive temperatures.</td></tr>
+<tr><td>Voltage variation (3.9.3, A.5.4)</td><td>Electronic</td><td>Points at 10 e and between ½ Max and Max, with the supply voltage as the condition: lower limit, nominal, upper limit. The limits are computed from the instrument's supply type.</td><td>|Ec| ≤ MPE at all three conditions.</td></tr>
+<tr><td>Damp heat (B.2)</td><td>Not class I; not class II with e &lt; 1 g</td><td>At least five loads under each of: reference 50 % RH, high temperature 85 % RH, reference again.</td><td>|Ec| ≤ MPE everywhere; three conditions.</td></tr>
+<tr><td>Creep (3.9.4.1, A.4.11.1)</td><td>II, III, IIII</td><td>Load near Max; indication on loading, at 15 and 30 min. Continue to 4 h only if the 30-minute limits are missed.</td><td>Drift ≤ 0.5 e in 30 min and ≤ 0.2 e between minute 15 and 30; otherwise drift over 4 h ≤ MPE.</td></tr>
+<tr><td>Zero return (3.9.4.2)</td><td>II, III, IIII</td><td>Zero before and after 30 min under a load near Max.</td><td>Deviation ≤ 0.5 e.</td></tr>
+<tr><td>Span stability (5.3.3, B.4)</td><td>Electronic, not class I</td><td>At least eight measurements near Max spread over up to 28 days, same weights. Use the date as the label.</td><td>Each |Ec| ≤ MPE; max − min of the errors ≤ max(0.5 e, 0.5 MPE).</td></tr>
+<tr><td>Descriptive markings (7.1)</td><td>All</td><td>Checklist, see section 11.</td><td>Every compulsory item present.</td></tr>
+<tr><td>Functional checks (4, 5.3)</td><td>Type approval</td><td>Checklist, see section 11.</td><td>Every applicable item satisfied.</td></tr>
+</tbody></table>
+<figure><img src="img/13-creep-form.png" alt="Creep form"><figcaption>The creep form pre-fills the next time step and keeps the load of the series.</figcaption></figure>
+<p>Tests that do not apply to the instrument (for example creep on a class I balance) show <span class="badge b-na">N/A</span> with the reason and need no entry.</p>
+
+<h2>11 &nbsp;Checklists</h2>
+<figure><img src="img/12-checklist.png" alt="Markings checklist"><figcaption>The descriptive-markings checklist. Choices save immediately.</figcaption></figure>
+<p>The two construction tests are inspections rather than measurements. For every item choose <b>Yes</b>, <b>No</b> or <b>N/A</b> and add a remark if useful. Rules:</p>
+<ul>
+<li>A <b>compulsory</b> item (manufacturer's mark, class oval, Max, Min, e, legibility) must be Yes. No or N/A fails the test.</li>
+<li>An <b>if applicable</b> item (serial number, software identification, T = +, special temperature limits and so on) may be N/A when the feature is absent. No fails the test.</li>
+<li>The test stays <span class="badge b-inc">INCOMPLETE</span> until every compulsory item is answered.</li>
+</ul>
+
+<h2>12 &nbsp;Laboratory environment</h2>
+<figure><img src="img/09-environment.png" alt="Environment readings"><figcaption>Environment readings with the inline add form.</figcaption></figure>
+<p>Record temperature (°C), relative humidity (%), barometric pressure (hPa), supply voltage (V) and frequency (Hz) with a stage label such as “Start of test”, “During test”, “End of test” or “Temperature chamber”. Each reading is time-stamped. A reading outside the instrument's temperature limits or supply limits is saved with a warning. All readings are printed in section 2 of the report.</p>
+
+<h2>13 &nbsp;Photographs, documents and remarks</h2>
+<figure><img src="img/14-attachments.png" alt="Attachments"><figcaption>Drop zone for photographs and documents; remarks save when you leave the field.</figcaption></figure>
+<ul>
+<li>Drop images (JPEG, PNG, WebP), PDFs, text, CSV, Word or Excel files onto the drop zone, or click <b>choose files</b>. Up to 8 MB each. You are asked for a caption. Photographs appear in the PDF and HTML report; other documents are listed with type and size.</li>
+<li><b>Remarks</b> are free text for the report: instrument condition on arrival, deviations from procedure, test weights used.</li>
+<li>The <b>audit trail</b> lists every action on the report with who did it and when.</li>
+</ul>
+
+<h2>14 &nbsp;Closing, approval and certificates</h2>
+<pre class="flow">draft --close--> closed (awaiting approval) --approve--> approved (+ certificate if eligible)
+  ^                  |                                       |
+  +----- reopen -----+---- return to engineer ---------------+---- withdraw and reopen (approver)</pre>
+<ol class="steps">
+<li><b>Engineer closes.</b> Press <b>Close report</b> in the workflow box. Observations are frozen. If the battery is incomplete you are asked to confirm; the report is then filed as incomplete and cannot be certified.</li>
+<li><b>Approver reviews.</b> Sign in as an approver and open the report. The workflow box offers an optional note, <b>Return to engineer</b> (reopens it with the note) and <b>Approve and sign</b>.</li>
+<li><b>Approval signs the report.</b> A SHA-256 signature is computed over the instrument, every observation and check, every verdict and the approval record, and printed on the report. If the evaluation passed, every test required for the purpose is decided and the instrument has no classification findings, a <b>certificate number</b> like <code>NAWI-C/2026/0001</code> is issued and the <b>Certificate</b> button appears.</li>
+<li><b>Verification.</b> Anyone can open <code>/verify/&lt;certificate number&gt;</code> to confirm that the certificate exists and is current. Withdrawing the approval marks it as withdrawn.</li>
+</ol>
+<figure><img src="img/15-approve-box.png" alt="Approver view"><figcaption>A closed report as the approver sees it: note field, Return to engineer, Approve and sign.</figcaption></figure>
+<figure><img src="img/16-approved.png" alt="Approved report"><figcaption>An approved, certified report. The Certificate button downloads the PDF; “Withdraw and reopen” is limited to approvers.</figcaption></figure>
+<figure class="half"><img src="img/19-verify.png" alt="Verify page"><figcaption>The public verification page.</figcaption></figure>
+
+<h2>15 &nbsp;Reports and exports</h2>
+<table><thead><tr><th>Button / address</th><th>Format</th><th>Use</th></tr></thead><tbody>
+<tr><td>Report</td><td>HTML in a new tab</td><td>Quick review or printing from the browser.</td></tr>
+<tr><td>PDF</td><td>PDF, A4</td><td>The standardised test report for the file and for the applicant. Needs Chrome/Chromium on the server; otherwise the HTML opens instead.</td></tr>
+<tr><td>Word</td><td>.docx</td><td>Editable copy of the same report for laboratories that add their own cover pages.</td></tr>
+<tr><td>Certificate</td><td>PDF, one page</td><td>Certificate of conformity, only after approval of a passing report.</td></tr>
+<tr><td><code>/api/sessions/&lt;id&gt;/report.json</code></td><td>JSON</td><td>Raw observations, checks, environment and the full evaluation, for integration.</td></tr>
+</tbody></table>
+<p>The report follows the R 76-2 structure: general information concerning the type, evaluation particulars and laboratory conditions, summary of results, test results by group with every column of the arithmetic, remarks, photographs, signatures, digital signature and audit trail.</p>
+<div class="two">
+<figure><img src="img/17-report-doc.png" alt="Report document"><figcaption>First page of the generated report.</figcaption></figure>
+<figure><img src="img/18-certificate.png" alt="Certificate"><figcaption>The certificate of conformity.</figcaption></figure>
+</div>
+
+<h2>16 &nbsp;Finding tests again</h2>
+<figure><img src="img/04-tests.png" alt="Tests list"><figcaption>The Tests view. Every report is listed; scroll, or narrow the list.</figcaption></figure>
+<ul>
+<li><b>Search</b> matches the reference, certificate number, applicant, manufacturer, model, serial number and application reference.</li>
+<li><b>Filters</b>: status (in progress, awaiting approval, approved), outcome (pass, fail, incomplete), accuracy class, purpose, and opened-from and opened-to dates. Selects apply immediately; press <b>Apply</b> after typing a search, <b>Clear</b> to reset.</li>
+<li>Each row shows a progress bar of required tests decided, status, outcome, certificate number and opening date. Click a row to open the report.</li>
+<li>Per-instrument history is on the instrument's detail panel.</li>
+</ul>
+
+<h2>17 &nbsp;Users and passwords</h2>
+<figure><img src="img/20-users.png" alt="Users"><figcaption>The Users view (admin only).</figcaption></figure>
+<p>Admins create accounts with a username, full name, role and a password of at least eight characters, change a role from the drop-down, disable or enable an account, and reset passwords. Passwords are stored as scrypt hashes; sessions are HttpOnly cookies that expire after 12 hours.</p>
+
+<h2>18 &nbsp;The standard page</h2>
+<figure><img src="img/21-standards.png" alt="Standards page"><figcaption>The standard page reads the rule set live.</figcaption></figure>
+<p>Use the calculator at the top to find the permissible error for any class, Max, e, load and context, and see where the load sits on the envelope. Below it are the accuracy-class table, the MPE bands, and every test with its rule, clause and whether type approval or verification requires it. This is the quickest way to answer “why did that point fail?”.</p>
+
+<h2>19 &nbsp;Worked examples</h2>
+<h3>NAWI/2026/0001, Avery India CS-30 (fails)</h3>
+<p>Class III counter scale, Max 30 kg, e = d = 5 g, initial verification. At 20 kg (4000 e, band above 2000 e) the MPE is 1.5 e = 7.5 g. The display reads 20 010 g with no changeover recorded, so Ec = +10 g and the point fails; the whole evaluation therefore fails while the other nine weighing points, eccentricity, discrimination, tare, zero and the markings checklist pass. Repeatability is incomplete because only three of ten runs are recorded. Use this report to try recording, the live readout, closing and returning.</p>
+<h3>NAWI/2026/0002, Essae-Teraoka DS-852 (certified)</h3>
+<p>Class III platform scale, Max 15 kg, e = d = 5 g. All 17 tests recorded and passing, closed, approved and signed, certificate NAWI-C/2026/0001 issued. Use it to see a complete report, the Word and PDF exports, the certificate and the verify page. As an approver you can withdraw and reopen it, then close and approve it again to watch a certificate being issued.</p>
+
+<h2>20 &nbsp;Troubleshooting</h2>
+<table><thead><tr><th style="width:34%">Symptom</th><th>Cause and fix</th></tr></thead><tbody>
+<tr><td>localhost:4178 does not open</td><td>The server is not running. Run <code>npm start</code> in <code>~/dev/nawi</code> and keep that window open.</td></tr>
+<tr><td>“listen EADDRINUSE” on start</td><td>Another copy is running. Use it, or stop it, or start with <code>PORT=5000 npm start</code>.</td></tr>
+<tr><td>Sent back to the login page</td><td>The 12-hour session expired. Sign in again; you return to the same report.</td></tr>
+<tr><td>PDF button opens the HTML report instead</td><td>No Chrome, Chromium or Edge found on the server. Install one or set <code>CHROME_PATH</code>. Word export always works.</td></tr>
+<tr><td>“this action needs the engineer role”</td><td>You are signed in as a viewer. Sign in with an account that has the right role.</td></tr>
+<tr><td>Record is refused</td><td>Read the message under the form; it names the field. Errors are metrological (load above Max, tare above T, missing time) and must be corrected.</td></tr>
+<tr><td>A test shows N/A</td><td>It does not apply to this instrument's class or type; nothing to record.</td></tr>
+<tr><td>Certificate button missing on a passing report</td><td>It appears only after approval. Check the outcome panel: every required test must be decided and the instrument must have no classification findings.</td></tr>
+<tr><td>Want a fresh database</td><td>Stop the server, delete <code>nawi.db</code>, <code>nawi.db-wal</code> and <code>nawi.db-shm</code>, run <code>npm run seed</code>, start again.</td></tr>
+</tbody></table>
+
+<h2>21 &nbsp;Glossary</h2>
+<table class="kv"><tbody>
+<tr><td>NAWI</td><td>Non-automatic weighing instrument: one that needs an operator during weighing (shop scales, platform scales, weighbridges).</td></tr>
+<tr><td>Max, Min</td><td>Maximum and minimum capacity. Results below Min are not subject to the MPE.</td></tr>
+<tr><td>e</td><td>Verification scale interval: the interval used for classification and for expressing the MPE.</td></tr>
+<tr><td>d</td><td>Actual scale interval: what the display steps in. d ≤ e.</td></tr>
+<tr><td>n</td><td>Max / e, the number of verification scale intervals. Table 3 limits it per class.</td></tr>
+<tr><td>MPE</td><td>Maximum permissible error: ±0.5 e, ±1 e or ±1.5 e depending on the load band; doubled in service.</td></tr>
+<tr><td>Changeover point</td><td>The load at which a digital display steps to the next value; used to recover the indication before rounding (P = I + ½e − ΔL).</td></tr>
+<tr><td>E, E₀, Ec</td><td>Error of indication; zero error determined before the measurement; corrected error Ec = E − E₀, the value compared with the MPE.</td></tr>
+<tr><td>Type approval / Verification</td><td>Type approval evaluates a design with the full battery; verification checks an individual instrument with the metrological tests.</td></tr>
+<tr><td>Initial verification / In service</td><td>The two MPE contexts of 3.5.1 and 3.5.2.</td></tr>
+<tr><td>Rule set</td><td>The JSON file holding every constant of an R 76 edition. Reports remember which one they were judged under.</td></tr>
+</tbody></table>
+<p class="small">NAWI TestBench, prototype for Smart India Hackathon 2026, problem statement SIH26035 (Department of Consumer Affairs). Every constant traces to OIML R 76-1:2006 (E); report layout after R 76-2:2007 (E).</p>
+</body></html>
