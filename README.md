@@ -1,5 +1,7 @@
 # NAWI TestBench
 
+Live demo: https://penalize-bogus-residency.ngrok-free.dev (served from the team's machine; sign in at `/login`).
+
 Test report generation for non-automatic weighing instruments, evaluated against OIML R 76.
 Built for Smart India Hackathon 2026, problem statement SIH26035 (Department of Consumer
 Affairs): the full text is in `docs/problem-statement.md`.

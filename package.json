@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test test/",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "share": "ngrok http 4178 --url=https://penalize-bogus-residency.ngrok-free.dev"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
