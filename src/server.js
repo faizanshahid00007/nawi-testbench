@@ -680,7 +680,7 @@ app.get('/verify/:certNo', wrap((req, res) => {
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const page = (title, body, ok, qrSvg = '') => `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
 <link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/site.css"><style>.v{max-width:720px;margin:60px auto;padding:0 24px}.v .card{padding:32px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start}.st{font-family:var(--serif);font-size:30px;color:${ok ? 'var(--pass)' : 'var(--fail)'};margin-bottom:12px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;color:var(--ink-2)}.brand img{width:40px}.brand b{font-family:var(--serif);font-size:22px;color:var(--ink)}@media(max-width:600px){.v .card{grid-template-columns:1fr}}</style></head>
-<body><div class="v"><div class="brand"><img src="/brand/logo.svg" alt=""><b>NAWI TestBench</b><span>certificate verification</span></div><div class="card"><div><div class="st">${esc(title)}</div>${body}</div>${qrSvg}</div></div></body></html>`;
+<body><div class="v"><div class="brand"><img src="/brand/mark.svg" alt=""><b>NAWI TestBench</b><span>certificate verification</span></div><div class="card"><div><div class="st">${esc(title)}</div>${body}</div>${qrSvg}</div></div></body></html>`;
   if (!row) return res.status(404).type('html').send(page('No such certificate', `<p>No certificate numbered <b>${esc(req.params.certNo)}</b> has been issued by this system.</p>`, false));
   const { session, instrument, evaluation } = loadSession(row.id);
   const current = session.status === 'approved';

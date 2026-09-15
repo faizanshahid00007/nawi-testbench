@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const qr = require('./qr');
 const { fmt, SUPPLY_LABELS } = require('./report');
-const LOGO = fs.readFileSync(path.join(__dirname, '..', 'public', 'brand', 'logo.svg'), 'utf8').replace(/<svg /, '<svg class="logo" ');
+const LOGO = fs.readFileSync(path.join(__dirname, '..', 'public', 'brand', 'mark.svg'), 'utf8').replace(/<svg /, '<svg class="logo" ');
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
