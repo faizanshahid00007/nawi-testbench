@@ -11,6 +11,20 @@
   $('#burger')?.addEventListener('click', (e) => { const open = nav.classList.toggle('open'); e.currentTarget.setAttribute('aria-expanded', String(open)); });
   $$('#nav-links a').forEach((a) => a.addEventListener('click', () => nav.classList.remove('open')));
 
+  /* hero indicator: gentle pointer tilt, transform only */
+  if (!reduce && matchMedia('(pointer:fine)').matches && matchMedia('(min-width: 1000px)').matches) {
+    const dev = $('#hero-device'); const zone = dev && dev.parentElement;
+    if (dev && zone) {
+      let raf = 0, tx = -8, ty = 4;
+      const apply = () => { raf = 0; dev.style.transform = `rotateY(${tx}deg) rotateX(${ty}deg)`; };
+      zone.addEventListener('mousemove', (e) => {
+        const r = dev.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5;
+        tx = -8 + px * 10; ty = 4 - py * 8; dev.classList.add('tilting'); if (!raf) raf = requestAnimationFrame(apply);
+      });
+      zone.addEventListener('mouseleave', () => { dev.classList.remove('tilting'); dev.style.transform = ''; });
+    }
+  }
+
   /* reveal once */
   const els = $$('.reveal');
   if (reduce || !('IntersectionObserver' in window)) els.forEach((el) => el.classList.add('in'));
