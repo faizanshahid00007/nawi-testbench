@@ -31,6 +31,7 @@ const formData = (form) => Object.fromEntries(new FormData(form).entries());
 
 let ME = null;
 let CURRENT = null;
+let AI = { enabled: false };
 const ROLE_RANK = { viewer: 0, engineer: 1, approver: 2, admin: 3 };
 const can = (role) => ME && ROLE_RANK[ME.role] >= ROLE_RANK[role];
 
@@ -67,6 +68,10 @@ $$('[data-goto]').forEach((b) => b.addEventListener('click', () => {
   go(b.dataset.goto);
   if (b.dataset.goto === 'instruments') openInstrumentForm();
 }));
+
+function applyAi() {
+  $$('[data-ai]').forEach((el) => { el.hidden = !AI.enabled || (el.dataset.ai === 'engineer' && !can('engineer')); });
+}
 
 function applyRoles() {
   $$('[data-role]').forEach((el) => { el.hidden = !can(el.dataset.role); });
@@ -350,6 +355,24 @@ $('#demo-instrument').addEventListener('click', () => {
   previewInstrument();
 });
 
+$('#plate-input')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const f = $('#form-instrument');
+  msg($('#instrument-msg'), 'Reading the data plate…', 'ok');
+  try {
+    const image = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(file); });
+    const { fields } = await post('/api/ai/plate', { image });
+    const filled = [];
+    for (const [k, v] of Object.entries(fields)) {
+      if (v === null || v === undefined || v === '' || k === 'notes') continue;
+      if (f[k] && f[k].type !== 'hidden') { f[k].value = v; filled.push(k); }
+    }
+    syncRangeEditor(f); previewInstrument();
+    msg($('#instrument-msg'), `Filled from the photograph: ${filled.join(', ') || 'nothing legible'}. ${fields.notes ? `Assistant notes: ${fields.notes}. ` : ''}Check every value against the plate before saving.`, filled.length ? 'ok' : 'err');
+  } catch (err) { msg($('#instrument-msg'), err.message); }
+  e.target.value = '';
+});
+
 $('#form-instrument').addEventListener('submit', async (e) => {
   e.preventDefault();
   syncRangeEditor(e.target);
@@ -572,7 +595,7 @@ function renderSession() {
     </div>
 
     <div class="card remarks-box" style="margin-top:20px">
-      <div class="card-head"><h3>Remarks</h3>${editable ? '<span class="hint">Saved when you leave the field</span>' : ''}</div>
+      <div class="card-head"><h3>Remarks</h3><span class="actions">${editable ? '<span class="hint">Saved when you leave the field</span>' : ''}${editable && AI.enabled ? '<button class="btn sm ghost" id="ai-summary" type="button">Draft with the assistant</button>' : ''}</span></div>
       ${editable ? `<textarea id="remarks" placeholder="Observations about the instrument, deviations from the procedure, conditions worth recording…">${esc(session.remarks || '')}</textarea>`
         : `<p>${esc(session.remarks || '—')}</p>`}
     </div>
@@ -669,7 +692,25 @@ function bindSessionActions(editable) {
     try { await post(`/api/sessions/${id}/return`, { note: $('#approve-note').value }); toast('Returned to the engineer'); refresh(); } catch (err) { toast(err.message, 'err'); }
   });
 
+  $$('[data-explain]').forEach((b) => b.addEventListener('click', async () => {
+    const key = b.dataset.explain; const box = $(`#explain-${key}`);
+    box.hidden = false; box.className = 'ai-explain pending'; box.textContent = 'Working out the explanation…'; b.disabled = true;
+    try { const { text } = await post(`/api/ai/sessions/${id}/explain/${key}`); box.className = 'ai-explain'; box.textContent = text; }
+    catch (err) { box.className = 'ai-explain'; box.textContent = err.message; }
+    b.disabled = false;
+  }));
+
   if (!editable) return;
+
+  $('#ai-summary')?.addEventListener('click', async (e) => {
+    const b = e.currentTarget; b.disabled = true; b.textContent = 'Drafting…';
+    try {
+      const { text } = await post(`/api/ai/sessions/${id}/summary`);
+      const ta = $('#remarks'); ta.value = (ta.value ? ta.value.trim() + '\n\n' : '') + text; ta.focus();
+      toast('Draft added to Remarks. Review it, then click elsewhere to save.');
+    } catch (err) { toast(err.message, 'err'); }
+    b.disabled = false; b.textContent = 'Draft with the assistant';
+  });
 
   $('#form-env')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -762,7 +803,9 @@ function testBlock(key, t, spec, instrument, observations, checks, editable, ses
   return `<details class="test-block" data-test="${key}" data-verdict="${esc(t.verdict)}" id="t-${key}"${open}>
     <summary>${esc(t.label)} ${badge(t.verdict)}<span class="clause">R 76‑1 ${esc(spec.clause || '')}</span><span class="count">${count}</span></summary>
     <div class="test-body">
-      <p class="crit">${esc(t.description || '')}${t.criterion ? ` <span class="clause">· ${esc(t.criterion)}</span>` : ''}</p>
+      <p class="crit">${esc(t.description || '')}${t.criterion ? ` <span class="clause">· ${esc(t.criterion)}</span>` : ''}
+        ${AI.enabled && ['pass', 'fail', 'incomplete'].includes(t.verdict) ? `<button class="link-btn" data-explain="${key}" type="button" style="margin-left:8px">Explain this verdict</button>` : ''}</p>
+      <div class="ai-explain" id="explain-${key}" hidden></div>
       ${t.verdict === 'not-applicable' ? `<p class="empty">Not applicable to this instrument: ${esc(t.note || '')}.</p>` : `
         ${t.kind === 'checklist' ? checklistTable(key, t, checks, editable)
           : t.points.length ? `<div class="tbl">${resultTable(t, rows, u, key, editable)}</div>` : '<p class="empty">No observations recorded for this test.</p>'}
@@ -1095,9 +1138,29 @@ function bandBoundaries(instrument) {
 
 /* -------------------------------- routing -------------------------------- */
 
+/* ------------------------------- assistant ------------------------------- */
+
+$('#ai-fab')?.addEventListener('click', () => { const p = $('#ai-panel'); p.hidden = !p.hidden; if (!p.hidden) { $('#ai-scope').textContent = CURRENT && $('#view-session').classList.contains('on') ? `about ${CURRENT.session.reference}` : 'about the rule set'; $('#ai-q').focus(); } });
+$('#ai-close')?.addEventListener('click', () => { $('#ai-panel').hidden = true; });
+$('#ai-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = $('#ai-q').value.trim(); if (!q) return;
+  const log = $('#ai-log');
+  log.insertAdjacentHTML('beforeend', `<div class="q">${esc(q)}</div><div class="a pending">Thinking…</div>`);
+  $('#ai-q').value = ''; log.scrollTop = log.scrollHeight;
+  const a = log.lastElementChild;
+  try {
+    const inSession = CURRENT && $('#view-session').classList.contains('on');
+    const { text } = await post('/api/ai/ask', { question: q, sessionId: inSession ? CURRENT.session.id : null });
+    a.className = 'a'; a.textContent = text;
+  } catch (err) { a.className = 'a err'; a.textContent = err.message; }
+  log.scrollTop = log.scrollHeight;
+});
+
 (async function start() {
   try { ME = await api('/api/me'); } catch { return; }
-  applyRoles();
+  try { AI = await api('/api/ai/status'); } catch { AI = { enabled: false }; }
+  applyRoles(); applyAi();
   const h = location.hash.replace('#', '');
   const m = h.match(/^report\/(\d+)$/);
   loadStats();

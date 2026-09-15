@@ -197,6 +197,7 @@
           <div class="actions">
             <button class="btn" type="submit" id="instrument-submit">Save instrument</button>
             <button class="btn quiet" type="button" id="demo-instrument">Fill a worked example</button>
+            <label class="btn ghost" data-ai="engineer" hidden style="cursor:pointer" title="Photograph the data plate; the assistant fills the particulars for you to check">Read from a photo<input type="file" id="plate-input" accept="image/*" hidden></label>
           </div>
           <div id="instrument-msg"></div>
         </form>
@@ -299,6 +300,13 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<button class="ai-fab" id="ai-fab" data-ai hidden aria-label="Ask the assistant">Ask</button>
+<aside class="ai-panel" id="ai-panel" hidden aria-label="Assistant">
+  <div class="ai-head"><b>Assistant</b><span id="ai-scope" class="hint"></span><button class="link-btn" id="ai-close">Close</button></div>
+  <div class="ai-log" id="ai-log"><p class="hint">Ask about the rules the software applies, or about the report you have open. Answers come only from the rule set, the record and the methodology notes.</p></div>
+  <form class="ai-form" id="ai-form"><input id="ai-q" placeholder="Why did the 20 kg point fail?" autocomplete="off" required><button class="btn sm" type="submit">Send</button></form>
+</aside>
 
 <script src="chart.js"></script>
 <script src="readout.js"></script>

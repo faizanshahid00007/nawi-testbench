@@ -23,7 +23,7 @@ npm start        # http://localhost:4178
                  #   /app        workbench: dashboard, tests, instruments, new test, users
                  #   /standards  rule-set explorer and MPE calculator
                  #   /verify/<certificate number>   public certificate check
-npm test         # 59 cases, all hand-worked from the standard
+npm test         # 64 cases, all hand-worked from the standard
 ```
 
 PDF export needs a Chromium-based browser on the machine (`CHROME_PATH` if not auto-detected).
@@ -79,6 +79,12 @@ through the same validation as the forms, with a row-by-row account of what was 
 **QR-verified certificates.** Certificate and report carry a QR code of the public verification
 address; the code is generated in-house.
 
+**Assistant (optional).** With an `ANTHROPIC_API_KEY` (or `GEMINI_API_KEY`) in the environment, the
+workbench gains four grounded helpers: read a photographed data plate into the instrument form,
+draft the report remarks from the evaluation, explain any verdict step by step, and ask questions
+about the rules or the open report. Every answer is generated only from the rule set, the stored
+record and the methodology notes; the engineer reviews before anything is saved.
+
 **Exports.** The R 76-2 style report as HTML, PDF and an editable Word document (written
 without external libraries), the raw record as JSON, photographs embedded, and the certificate
 as HTML and PDF.
@@ -106,6 +112,7 @@ src/server.js        HTTP API and pages
 src/report.js        HTML report        src/documents.js + src/docx.js   Word report
 src/certificate.js   certificate        src/pdf.js                        PDF via headless Chromium
 src/qr.js            QR encoder (no dependencies)
+src/ai.js            assistant: Claude SDK or Gemini, grounded prompts
 src/seed.js          worked examples
 public/              overview, login, workbench, rule-set explorer
                      chart.js draws the MPE envelope; readout.js draws the LCD and the MPE gauge

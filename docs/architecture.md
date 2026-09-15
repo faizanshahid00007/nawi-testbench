@@ -106,6 +106,17 @@ approval record. The certificate and the report print the hash, the public URL
 external service). The verify page re-evaluates the stored record and states whether the
 certificate is current or withdrawn.
 
+## Assistant
+
+`src/ai.js` wraps one completion call behind two providers: the official `@anthropic-ai/sdk`
+(`claude-opus-5`, adaptive thinking, server-side refusal fallbacks on) or Google Gemini over
+HTTP. Four routes use it: `POST /api/ai/plate` (image of a data plate to instrument fields),
+`POST /api/ai/sessions/:id/summary` (drafted remarks), `POST /api/ai/sessions/:id/explain/:test`
+and `POST /api/ai/ask`. Prompts are grounded: the model receives the rule set, a compacted copy
+of the evaluation record and the methodology notes, and is told to answer only from them. Output
+is never written to the record automatically; the engineer reviews plate fields and drafted
+remarks before saving. Twenty assistant requests per user per minute; 503 when no key is set.
+
 ## Security notes
 
 Passwords are hashed with scrypt (N = 16384, 64-byte key, random 16-byte salt) and

@@ -12,6 +12,7 @@
     "test:browser": "node scripts/browser-smoke.cjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
     "better-sqlite3": "^11.3.0",
     "express": "^4.21.0"
   },

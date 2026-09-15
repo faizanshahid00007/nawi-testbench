@@ -13,6 +13,7 @@ const pdf = require('./pdf');
 const auth = require('./auth');
 
 const qr = require('./qr');
+const ai = require('./ai');
 const fs = require('fs');
 
 const app = express();
@@ -693,6 +694,54 @@ app.get('/verify/:certNo', wrap((req, res) => {
      <div class="kv"><span class="k">Approved</span><span>${esc(session.approvedBy)} · ${session.approvedAt ? new Date(session.approvedAt).toLocaleDateString('en-IN', { dateStyle: 'long' }) : ''}</span></div>
      <div class="kv"><span class="k">Signature</span><span style="word-break:break-all;font-size:13px">${esc(session.signature)}</span></div>`, current,
     qr.svg(`${baseUrl(req)}/verify/${encodeURIComponent(session.certificateNo)}`, { size: 140, title: 'QR code of this verification address' })));
+}));
+
+/* ---- AI assistance -------------------------------------------------------- */
+
+const AI_CALLS = new Map();
+function aiAllowed(userId) {
+  const now = Date.now(); const rec = AI_CALLS.get(userId) || [];
+  const recent = rec.filter((t) => now - t < 60 * 1000);
+  if (recent.length >= 20) return false;
+  recent.push(now); AI_CALLS.set(userId, recent); return true;
+}
+const aiGate = (req, res, next) => {
+  if (!ai.status().enabled) return res.status(503).json({ error: 'AI assistance is not configured on this server. Set ANTHROPIC_API_KEY or GEMINI_API_KEY and restart.' });
+  if (!aiAllowed(req.user.id)) return res.status(429).json({ error: 'too many assistant requests; wait a minute' });
+  next();
+};
+
+app.get('/api/ai/status', signedIn, wrap((req, res) => res.json(ai.status())));
+
+app.post('/api/ai/plate', canWrite, aiGate, wrap(async (req, res) => {
+  require_(req.body, ['image']);
+  const m = String(req.body.image).match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+  if (!m) throw new Error('send the photograph as a JPEG, PNG or WebP data URL');
+  if (m[2].length > 8 * 1024 * 1024 * 1.37) throw new Error('photograph is larger than 8 MB');
+  const fields = await ai.readPlate({ mime: m[1], data: m[2] });
+  log(req, null, 'ai.plate', `${fields.manufacturer || '?'} ${fields.model || '?'}`);
+  res.json({ fields });
+}));
+
+app.post('/api/ai/sessions/:id/summary', canWrite, aiGate, wrap(async (req, res) => {
+  const bundle = loadSession(Number(req.params.id));
+  const text = await ai.draftSummary(bundle);
+  log(req, bundle.session.id, 'ai.summary', `${text.length} characters drafted`);
+  res.json({ text });
+}));
+
+app.post('/api/ai/sessions/:id/explain/:testKey', signedIn, aiGate, wrap(async (req, res) => {
+  const bundle = loadSession(Number(req.params.id));
+  const text = await ai.explainTest(bundle, req.params.testKey);
+  res.json({ text });
+}));
+
+app.post('/api/ai/ask', signedIn, aiGate, wrap(async (req, res) => {
+  require_(req.body, ['question']);
+  const q = String(req.body.question).slice(0, 1000);
+  const bundle = req.body.sessionId ? loadSession(Number(req.body.sessionId)) : null;
+  const text = await ai.ask(q, bundle, engine.loadRuleset(bundle ? bundle.session.rulesetId : 'oiml-r76-2006'));
+  res.json({ text });
 }));
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'no such endpoint' }));

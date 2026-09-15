@@ -22,6 +22,13 @@ Environment variables:
 | `PORT` | `4178` | HTTP port |
 | `NAWI_DB` | `./nawi.db` | SQLite file; WAL mode |
 | `CHROME_PATH` | auto-detected | browser used for PDF rendering |
+| `ANTHROPIC_API_KEY` | unset | enables the assistant (data-plate reading, drafted remarks, explanations, questions) through Claude, model `claude-opus-5` by default |
+| `GEMINI_API_KEY` | unset | alternative provider for the assistant (Google Gemini, `gemini-2.5-flash` by default; free tier available) |
+| `AI_MODEL` | provider default | override the model id for either provider |
+
+Without either key the assistant buttons are hidden and the AI routes answer 503; everything
+else works unchanged. Start with the key in the environment, for example
+`ANTHROPIC_API_KEY=sk-ant-... npm start`.
 
 ## Accounts
 
