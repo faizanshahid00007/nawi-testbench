@@ -1,6 +1,6 @@
 /* Workbench: dark rail continuous with the masthead, lit bench for the work. */
 
-body.workbench, body { background: radial-gradient(70% 50% at 85% -10%, rgba(45,212,191,.14), transparent 60%), radial-gradient(50% 40% at 0% 100%, rgba(14,165,233,.10), transparent 60%), var(--paper); background-attachment: fixed; }
+body { background: var(--paper); }
 
 .shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 0; max-width: none; padding: 0; min-height: calc(100vh - 64px); background: linear-gradient(to right, var(--bg-1) 224px, transparent 224px); }
 .side { position: sticky; top: 64px; align-self: start; height: calc(100vh - 64px); display: flex; flex-direction: column; gap: 2px; background: var(--bg-1); color: var(--on-dark); border-right: 1px solid var(--line-dark); padding: 18px 14px 20px; }
@@ -57,7 +57,7 @@ textarea { resize: vertical; }
 .console { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
 .console .meter { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px 22px 18px; text-align: left; cursor: pointer; color: var(--ink); display: grid; gap: 10px; box-shadow: var(--shadow-1); transition: transform var(--t-med) var(--ease-out), box-shadow var(--t-med), border-color var(--t-med); overflow: hidden; }
 .console .meter::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--grad-brand); }
-.console .meter:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); border-color: rgba(45,212,191,.45); }
+.console .meter:hover { border-color: rgba(45,212,191,.45); }
 .console .meter .lcd-frame { display: block; }
 .metric-value { font-family: var(--display); font-size: 42px; line-height: 1; letter-spacing: -0.04em; font-weight: 700; }
 .metric-icon { position: absolute; right: 18px; top: 18px; width: 34px; height: 34px; border-radius: 10px; background: var(--grad-brand-soft); color: var(--accent-strong); display: grid; place-items: center; font-size: 16px; }

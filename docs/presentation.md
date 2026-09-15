@@ -16,17 +16,19 @@ constants are the same Table 6 values. A single passing point never claims the i
 
 ## Identity: "Precision Aurora"
 
-- Ground: deep ink navy (`--bg-0 #070b16`, `--bg-1 #0b1220`) lit by teal → cyan aurora gradients
-  (`--grad-brand`), with brass amber (`#f5b84a`) for the calibration weights. Emerald and coral are
-  reserved for verdicts. Work surfaces in the workbench are light (`--paper #eef1f7`, white cards).
+- Ground: deep ink navy (`--bg-0 #070b16`, `--bg-1 #0b1220`) with one accent, teal (`#2dd4bf`);
+  the teal → sky gradient (`--grad-brand`) is used only on the logo tile and primary buttons. Emerald and
+  coral are reserved for verdicts. Work surfaces in the workbench are light (`--paper #eef1f7`, white cards).
 - Logo: `public/brand/mark.svg`, a balance on a teal-to-sky gradient tile; icons in `public/brand/`,
   favicon at `/favicon.ico`.
 - Type: Sora (display), Manrope (text and UI), JetBrains Mono (numbers, formulas, the LCD annunciators).
   Loaded from Google Fonts with system fallbacks; the app works offline with the fallbacks.
 - Signature element: the seven-segment LCD readout (`public/readout.js`) with its MPE gauge, used on the
   landing hero, the login page, the dashboard rail and every observation form.
-- Motion: word-by-word hero reveal, scroll reveals, counters, magnetic buttons, tilt-with-spotlight
-  tiles, hero parallax. All CSS/JS only, no libraries, all disabled under `prefers-reduced-motion`.
+- Motion: deliberately minimal for performance. One-time scroll reveals only; no blur filters,
+  backdrop blur, parallax or continuous animation. Disabled under `prefers-reduced-motion`.
+- Layout: fixed solid navigation, hero with the live indicator, four feature panels, the interactive
+  test bench, the five-step workflow, one closing panel. Nothing decorative that does not explain the product.
 - Tokens live in `public/site.css` (`:root`), including radii, shadows and easing curves.
 
 ## Files

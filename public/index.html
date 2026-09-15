@@ -5,155 +5,96 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="NAWI TestBench turns weighing-instrument observations into OIML R 76 verdicts, standardised reports and QR-verified certificates.">
 <meta name="theme-color" content="#070b16">
-<title>NAWI TestBench — OIML R 76 type evaluation, computed to the clause</title>
-<link rel="icon" href="/favicon.ico">
+<title>NAWI TestBench</title>
+<link rel="icon" type="image/svg+xml" href="/brand/mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/icon-32.png">
+<link rel="shortcut icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/brand/icon-180.png">
 <link rel="stylesheet" href="/site.css">
 <link rel="stylesheet" href="/landing.css">
 </head>
-<body class="landing grain">
+<body class="landing">
 <a class="skip-link" href="#main">Skip to content</a>
-<div class="progress" id="progress" aria-hidden="true"></div>
 
 <header class="landing-nav" id="nav">
-  <a class="brand-lockup" href="/"><img src="/brand/mark.svg" alt=""><span>NAWI TestBench<span class="brand-sub">OIML R 76 · SIH26035</span></span></a>
-  <nav id="nav-links" aria-label="Main navigation">
-    <a href="#platform">Platform</a>
-    <a href="#live-lab">Live calculation</a>
-    <a href="#flow">Workflow</a>
-    <a href="/standards">The standard</a>
-    <a href="/demo.html">Demo guide</a>
-  </nav>
-  <div class="nav-cta">
-    <a class="btn magnetic" href="/app">Open the workbench</a>
-    <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  <div class="inner">
+    <a class="brand-lockup" href="/"><img src="/brand/mark.svg" alt=""><span>NAWI TestBench<span class="brand-sub">OIML R 76</span></span></a>
+    <nav id="nav-links" aria-label="Main navigation">
+      <a href="#platform">Platform</a>
+      <a href="#live-lab">Live calculation</a>
+      <a href="#flow">Workflow</a>
+      <a href="/standards">The standard</a>
+      <a href="/demo.html">Demo guide</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn" href="/app">Open the workbench</a>
+      <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
   </div>
 </header>
 
 <main id="main">
 
-<!-- ============================== HERO ============================== -->
 <section class="hero">
-  <div class="aurora" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="gridlines"></div></div>
   <div class="hero-copy">
-    <div class="eyebrow"><span class="live-dot"></span> Type evaluation of weighing instruments</div>
-    <h1 id="hero-title">Every weighing test, judged to the clause.</h1>
-    <p class="sub">Laboratories record what the indicator shows. NAWI TestBench picks the permissible-error band, applies the changeover point, runs the full R 76 battery and issues the report and the certificate, with the clause behind every verdict.</p>
+    <div class="eyebrow">Type evaluation of weighing instruments</div>
+    <h1>Every weighing test, judged to the clause.</h1>
+    <p class="sub">Record what the indicator shows. NAWI TestBench picks the permissible-error band, applies the changeover point, runs the full OIML R 76 battery and issues the report and the certificate, with the clause behind every verdict.</p>
     <div class="hero-actions">
-      <a class="btn lg magnetic" href="/app">Enter the workbench</a>
-      <a class="btn lg ghost magnetic" href="#live-lab">Try a live calculation</a>
+      <a class="btn lg" href="/app">Enter the workbench</a>
+      <a class="btn lg ghost" href="#live-lab">See a live calculation</a>
     </div>
-    <div class="hero-proof">
-      <span><i>✓</i> 17 R 76 tests as data</span>
-      <span><i>✓</i> 59 hand-worked checks</span>
-      <span><i>✓</i> QR-verified certificates</span>
-    </div>
+    <div class="hero-proof"><span>17 R 76 tests</span><span>59 hand-worked checks</span><span>QR-verified certificates</span></div>
   </div>
-
-  <div class="scene" id="scene" aria-label="A weighing indicator showing a 20 kg reading judged against its permissible error">
-    <div class="glow"></div>
-    <svg class="layer weight w1" viewBox="0 0 120 150" aria-hidden="true"><defs><linearGradient id="wg1" x1="0" x2="1"><stop offset="0" stop-color="#5a3f12"/><stop offset=".3" stop-color="#f5b84a"/><stop offset=".55" stop-color="#ffe2a3"/><stop offset=".8" stop-color="#d48f1f"/><stop offset="1" stop-color="#5a3f12"/></linearGradient></defs><path d="M46 8h28l6 26H40z" fill="url(#wg1)"/><ellipse cx="60" cy="8" rx="14" ry="4" fill="#ffe7b0"/><path d="M28 34h64v96H28z" fill="url(#wg1)"/><ellipse cx="60" cy="34" rx="32" ry="8" fill="#ffd98a"/><ellipse cx="60" cy="130" rx="32" ry="8" fill="#7a5615"/><text x="60" y="88" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#3a2a08">10 kg</text></svg>
-    <svg class="layer weight w2" viewBox="0 0 120 150" aria-hidden="true"><path d="M46 8h28l6 26H40z" fill="url(#wg1)"/><ellipse cx="60" cy="8" rx="14" ry="4" fill="#ffe7b0"/><path d="M28 34h64v96H28z" fill="url(#wg1)"/><ellipse cx="60" cy="34" rx="32" ry="8" fill="#ffd98a"/><ellipse cx="60" cy="130" rx="32" ry="8" fill="#7a5615"/><text x="60" y="88" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="700" fill="#3a2a08">5 kg</text></svg>
-    <svg class="layer weight w3" viewBox="0 0 120 150" aria-hidden="true"><path d="M46 8h28l6 26H40z" fill="url(#wg1)"/><ellipse cx="60" cy="8" rx="14" ry="4" fill="#ffe7b0"/><path d="M28 34h64v96H28z" fill="url(#wg1)"/><ellipse cx="60" cy="34" rx="32" ry="8" fill="#ffd98a"/><ellipse cx="60" cy="130" rx="32" ry="8" fill="#7a5615"/><text x="60" y="88" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" fill="#3a2a08">2 kg</text></svg>
-
-    <div class="layer device" id="device">
-      <div class="top"><b>Avery India CS-30</b><small>class III · e = 5 g · Max 30 kg</small></div>
-      <div class="lcd-frame" id="hero-lcd"></div>
-      <div class="keys" id="hero-keys"></div>
-      <div id="hero-gauge"></div>
-    </div>
-
-    <div class="layer chip c1" id="hero-chip"><span class="dot">✓</span><div>Verdict<b id="hero-chip-text">within ± 7.5 g</b></div></div>
-    <div class="layer chip c2"><span class="dot" style="background:var(--grad-brand);color:#062b2e">e</span><div>Corrected error<b id="hero-chip-ec">Ec = E − E₀</b></div></div>
+  <div class="device" id="hero-device">
+    <div class="top"><b>Avery India CS-30</b><small>class III · e = 5 g · Max 30 kg</small></div>
+    <div class="lcd-frame" id="hero-lcd"></div>
+    <div class="keys" id="hero-keys"></div>
+    <div id="hero-gauge"></div>
+    <div class="verdict" id="hero-explain"></div>
   </div>
 </section>
 
-<!-- ============================== STATS ============================== -->
-<section class="stats reveal">
-  <div class="row">
-    <div class="cell"><div class="n"><span data-count="17">0</span></div><div class="l">R 76 tests, each with its clause</div><div class="s">metrological, influence, time, construction</div></div>
-    <div class="cell"><div class="n"><span data-count="59">0</span></div><div class="l">hand-worked checks in the test suite</div><div class="s">every constant traced to R 76-1:2006</div></div>
-    <div class="cell"><div class="n"><span data-count="4">0</span></div><div class="l">roles with signed approval</div><div class="s">viewer, engineer, approver, admin</div></div>
-    <div class="cell"><div class="n small"><em>PDF</em> · DOCX · JSON</div><div class="l">standardised report, three ways</div><div class="s">plus a QR-verified certificate</div></div>
-  </div>
-</section>
-
-<!-- ============================== PLATFORM ============================== -->
 <section class="section page-width" id="platform">
-  <div class="section-head">
-    <div class="reveal"><div class="eyebrow">What the software does</div><h2>Built to the brief of SIH26035, the way a metrology laboratory works.</h2></div>
-    <p class="reveal" data-delay="1">Instrument register, laboratory conditions, seventeen R 76 test forms with validation, automatic permissible errors and verdicts, a searchable repository with roles, and the report, the Word file, the PDF and the certificate.</p>
+  <div class="section-head reveal">
+    <div class="eyebrow">What the software does</div>
+    <h2>Built to the brief of SIH26035, the way a metrology laboratory works.</h2>
+    <p>Instrument register, laboratory conditions, seventeen R 76 test forms with validation, automatic permissible errors and verdicts, a searchable repository with roles, and the report, the Word file, the PDF and the certificate.</p>
   </div>
-
-  <div class="bento">
-    <article class="tile wide tall tilt reveal">
+  <div class="features">
+    <article class="feature reveal">
       <h3>The standard is data, not code.</h3>
-      <p>Accuracy classes, permitted ranges of n, the MPE bands, the supply-voltage rules and every test's criterion live in a versioned rule-set file. A revised R 76 is a new file. Every report pins the rule set it was judged under, so old reports stay reproducible.</p>
+      <p>Accuracy classes, MPE bands, supply-voltage rules and every test's criterion live in a versioned rule-set file. A revised R 76 is a new file, and every report pins the rule set it was judged under.</p>
 <pre class="code"><span class="c">// rulesets/oiml-r76-2006.json</span>
-<span class="k">"III"</span>: { <span class="k">"designation"</span>: <span class="s">"Medium accuracy"</span>, <span class="k">"clause"</span>: <span class="s">"3.2 Table 3"</span>,
-<span class="hl">  <span class="k">"bands"</span>: [[0, 500, 0.5], [500, 2000, 1.0], [2000, 10000, 1.5]] },</span>
-<span class="k">"creep"</span>: { <span class="k">"clause"</span>: <span class="s">"3.9.4.1 / A.4.11.1"</span>,
-  <span class="k">"within30MinE"</span>: 0.5, <span class="k">"between15and30E"</span>: 0.2, <span class="k">"fallbackHours"</span>: 4,
-  <span class="k">"appliesToClasses"</span>: [<span class="s">"II"</span>, <span class="s">"III"</span>, <span class="s">"IIII"</span>] },
-<span class="k">"markings"</span>: { <span class="k">"clause"</span>: <span class="s">"7.1"</span>, <span class="k">"kind"</span>: <span class="s">"checklist"</span>, <span class="k">"items"</span>: [ <span class="c">… 14 items …</span> ] }</pre>
-      <span class="cl">R 76-1 3.2 · 3.5 · 3.9 · 5.3 · 7.1</span>
+<span class="k">"III"</span>: { <span class="k">"bands"</span>: [[0, 500, 0.5], [500, 2000, 1.0], [2000, 10000, 1.5]] },
+<span class="k">"creep"</span>: { <span class="k">"clause"</span>: <span class="s">"3.9.4.1 / A.4.11.1"</span>, <span class="k">"within30MinE"</span>: 0.5, <span class="k">"between15and30E"</span>: 0.2 }</pre>
     </article>
-
-    <article class="tile tilt reveal mini-lcd" data-delay="1">
-      <h3>See the verdict before you save.</h3>
-      <p>Every entry form has a live readout: the indication, the corrected error and where it sits inside ± MPE.</p>
-      <div class="lcd-frame" id="tile-lcd"></div>
-      <div id="tile-gauge"></div>
-      <div class="keys" id="tile-keys"></div>
-    </article>
-
-    <article class="tile tilt reveal" data-delay="2">
+    <article class="feature reveal">
       <h3>Validation with metrological sense.</h3>
-      <p>Impossible readings are refused. Implausible ones are saved with a warning that follows them into the report.</p>
+      <p>Impossible readings are refused. Implausible ones are saved with a warning that follows them into the report. A live readout in every form shows the corrected error against ± MPE before you save.</p>
       <ul class="rules">
         <li class="stop"><i>✕</i>Load above Max + T, tare above T, missing time or second reading</li>
         <li class="warn"><i>!</i>Indication not a multiple of d, ΔL above one e, condition outside the instrument's limits</li>
       </ul>
     </article>
-
-    <article class="tile half tilt reveal" data-delay="1">
-      <h3>Roles, signatures and an audit trail.</h3>
-      <p>Engineers record and close. Approvers sign: a SHA-256 over every observation, verdict and the approval itself. Admins manage accounts. Every action is logged.</p>
-      <div class="roles">
-        <div><b>Viewer</b><small>reads and exports</small></div>
-        <div><b>Engineer</b><small>records, closes</small></div>
-        <div><b>Approver</b><small>signs, certifies</small></div>
-        <div><b>Admin</b><small>manages users</small></div>
-      </div>
-      <div class="hash">da5f1a3ce98381a413e7825e48b52038db2b293b8e63165d6defe662361e5957</div>
-    </article>
-
-    <article class="tile half tilt reveal" data-delay="2">
+    <article class="feature reveal">
       <h3>A certificate anyone can verify.</h3>
-      <p>Issued only when the full battery passes and an approver has signed. It carries a QR code to a public verification page that re-evaluates the stored record.</p>
+      <p>Issued only when the full battery passes and an approver has signed with a SHA-256 over every observation and verdict. The QR code opens a public verification page.</p>
       <div class="cert-mock">
         <div><div class="t">Certificate of Conformity</div><div class="no">NAWI-C/2026/0001 · Essae-Teraoka DS-852</div><div class="rowline"><span>17 / 17 PASS</span><span>signed</span><span>verifiable</span></div></div>
-        <img src="/api/qr.svg?text=%2Fverify%2FNAWI-C%252F2026%252F0001" alt="QR code linking to the certificate verification page" loading="lazy">
+        <img src="/api/qr.svg?text=%2Fverify%2FNAWI-C%252F2026%252F0001" alt="QR code to the certificate verification page" loading="lazy">
       </div>
     </article>
-
-    <article class="tile half tilt reveal" data-delay="1">
+    <article class="feature reveal">
       <h3>Multi-interval instruments, handled properly.</h3>
       <p>Up to three partial ranges, each classified on its own. The MPE, the changeover step and the discrimination weight follow the e of the range the load falls in.</p>
-      <svg class="stair" viewBox="0 0 520 150" aria-label="MPE staircase across two partial ranges"><defs><linearGradient id="sg" x1="0" x2="1"><stop offset="0" stop-color="#2dd4bf" stop-opacity=".35"/><stop offset="1" stop-color="#0ea5e9" stop-opacity=".35"/></linearGradient></defs><path d="M20 110h90v-16h70v-16h40v-6h60v-16h70v-16h140" fill="none" stroke="url(#sg)" stroke-width="18" stroke-linejoin="round"/><path d="M20 110h90v-16h70v-16h40v-6h60v-16h70v-16h140" fill="none" stroke="#2dd4bf" stroke-width="2"/><line x1="220" y1="20" x2="220" y2="135" stroke="#f5b84a" stroke-dasharray="4 4"/><text x="120" y="140" font-family="JetBrains Mono, monospace" font-size="12" fill="#a9b5cf" text-anchor="middle">range 1 · e = 2 g</text><text x="380" y="140" font-family="JetBrains Mono, monospace" font-size="12" fill="#a9b5cf" text-anchor="middle">range 2 · e = 5 g</text><text x="220" y="14" font-family="JetBrains Mono, monospace" font-size="11" fill="#f5b84a" text-anchor="middle">6 kg range change</text></svg>
-    </article>
-
-    <article class="tile half tilt reveal" data-delay="2">
-      <h3>Laboratory conditions, on the record.</h3>
-      <p>Temperature, humidity, pressure, supply voltage and frequency at the start, during and at the end. Each reading is checked against the instrument's own limits and printed in the report.</p>
-      <span class="cl">R 76-1 3.9.2 · 3.9.3 · A.4.1</span>
+      <svg class="stair" viewBox="0 0 520 130" aria-label="MPE staircase across two partial ranges"><path d="M20 100h90v-16h70v-16h40v-6h60v-16h70v-16h140" fill="none" stroke="#2dd4bf" stroke-width="3" stroke-linejoin="round"/><line x1="220" y1="14" x2="220" y2="118" stroke="#f5b84a" stroke-dasharray="4 4"/><text x="120" y="124" font-family="JetBrains Mono, monospace" font-size="12" fill="#a9b5cf" text-anchor="middle">range 1 · e = 2 g</text><text x="380" y="124" font-family="JetBrains Mono, monospace" font-size="12" fill="#a9b5cf" text-anchor="middle">range 2 · e = 5 g</text><text x="220" y="10" font-family="JetBrains Mono, monospace" font-size="11" fill="#f5b84a" text-anchor="middle">6 kg range change</text></svg>
     </article>
   </div>
 </section>
 
-<!-- ============================== LIVE LAB ============================== -->
-<section class="lab" id="live-lab">
-  <div class="page-width inner">
+<section class="lab page-width" id="live-lab">
+  <div class="inner">
     <div class="reveal">
       <div class="eyebrow">The science, made visible</div>
       <h2>A small error. A meaningful decision.</h2>
@@ -164,53 +105,39 @@
         <div><span>3</span><div><b>Correct for the zero error and compare</b><span class="mono">Ec = E − E₀ ≤ MPE</span></div></div>
       </div>
     </div>
-    <div class="lab-device reveal" data-delay="1">
-      <div class="device">
-        <div class="top"><b>Interactive test bench</b><small id="lab-status">loading rule set…</small></div>
-        <div class="lcd-frame" id="lab-lcd"></div>
-        <div class="keys" id="lab-keys"></div>
-        <div id="lab-gauge"></div>
-      </div>
-      <div class="explain" id="lab-explain">Choose a test load on the indicator.</div>
+    <div class="device reveal">
+      <div class="top"><b>Interactive test bench</b><small id="lab-status">loading rule set…</small></div>
+      <div class="lcd-frame" id="lab-lcd"></div>
+      <div class="keys" id="lab-keys"></div>
+      <div id="lab-gauge"></div>
+      <div class="verdict" id="lab-explain"></div>
     </div>
   </div>
 </section>
 
-<!-- ============================== FLOW ============================== -->
 <section class="flow page-width" id="flow">
-  <div class="reveal"><div class="eyebrow">From first reading to certificate</div><h2 style="margin-top:16px;font-size:clamp(32px,4vw,50px)">One record, four states, every transition signed.</h2></div>
+  <div class="section-head reveal"><div class="eyebrow">From first reading to certificate</div><h2>One record, four states, every transition signed.</h2></div>
   <div class="rail">
     <div class="step reveal"><i>1</i><h3>Register</h3><p>Instrument particulars and Table 3 admissibility, checked as you type.</p><small>engineer</small></div>
-    <div class="step reveal" data-delay="1"><i>2</i><h3>Record</h3><p>Conditions, observations, checklists and photographs, validated at entry.</p><small>engineer</small></div>
-    <div class="step reveal" data-delay="2"><i>3</i><h3>Evaluate</h3><p>MPE bands, changeover and zero corrections, every criterion, on every save.</p><small>automatic</small></div>
-    <div class="step reveal" data-delay="3"><i>4</i><h3>Approve</h3><p>Closed reports reviewed and signed with a SHA-256 over the whole record.</p><small>approver</small></div>
-    <div class="step reveal" data-delay="4"><i>5</i><h3>Certify</h3><p>Numbered certificate, QR code, public verification page.</p><small>automatic</small></div>
+    <div class="step reveal"><i>2</i><h3>Record</h3><p>Conditions, observations, checklists and photographs, validated at entry.</p><small>engineer</small></div>
+    <div class="step reveal"><i>3</i><h3>Evaluate</h3><p>MPE bands, changeover and zero corrections, every criterion, on every save.</p><small>automatic</small></div>
+    <div class="step reveal"><i>4</i><h3>Approve</h3><p>Closed reports reviewed and signed with a SHA-256 over the whole record.</p><small>approver</small></div>
+    <div class="step reveal"><i>5</i><h3>Certify</h3><p>Numbered certificate, QR code, public verification page.</p><small>automatic</small></div>
   </div>
 </section>
 
-<!-- ============================== PROOF ============================== -->
-<section class="proof page-width">
-  <div class="reveal"><div class="eyebrow">Built to the brief</div><h2 style="margin-top:16px;font-size:clamp(32px,4vw,50px)">Every line of the problem statement, answered.</h2></div>
-  <div class="cols">
-    <div class="col reveal"><h3>Capture</h3><ul><li>Manufacturer, applicant, model, specifications</li><li>Laboratory and environmental conditions</li><li>Observations for all prescribed tests</li><li>Photographs and supporting documents</li><li>CSV import for spreadsheet records</li></ul></div>
-    <div class="col reveal" data-delay="1"><h3>Evaluate</h3><ul><li>Permissible errors per load and range</li><li>Validation of input data and calculations</li><li>Pass or fail per point, test and evaluation</li><li>Completeness per purpose, certificate eligibility</li><li>Future R 76 editions as new rule-set files</li></ul></div>
-    <div class="col reveal" data-delay="2"><h3>Deliver</h3><ul><li>Standardised report in PDF and editable Word</li><li>Dashboard of completed, in-process and history</li><li>Search and retrieval across the repository</li><li>Role-based secure access, audit trail</li><li>Signed approvals, QR-verified certificates</li></ul></div>
-  </div>
-</section>
-
-<!-- ============================== CTA ============================== -->
 <div class="cta-band reveal">
   <div class="panel">
-    <div><h2>Try it on the worked examples.</h2><p>A class III counter scale that fails at 20 kg, a platform scale certified through all seventeen tests, and a multi-interval retail scale in progress. Sign in as an engineer to record or as an approver to sign.</p></div>
-    <div class="actions"><a class="btn lg magnetic" href="/app">Open the workbench</a><a class="btn lg ghost magnetic" href="/verify/NAWI-C%2F2026%2F0001">Verify a certificate</a></div>
+    <div><h2>Try it on the worked examples.</h2><p>A counter scale that fails at 20 kg, a platform scale certified through all seventeen tests, and a multi-interval retail scale in progress.</p></div>
+    <div class="actions"><a class="btn lg" href="/app">Open the workbench</a><a class="btn lg ghost" href="/verify/NAWI-C%2F2026%2F0001">Verify a certificate</a></div>
   </div>
 </div>
 
 </main>
 
 <footer class="home-footer">
-  <a class="brand-lockup" href="/"><img src="/brand/mark.svg" alt=""><span>NAWI TestBench<span class="brand-sub">OIML R 76 · SIH26035</span></span></a>
-  <p>Smart India Hackathon 2026 · Ministry of Consumer Affairs, Food &amp; Public Distribution · Rule set OIML R 76-1:2006, report layout R 76-2:2007</p>
+  <a class="brand-lockup" href="/"><img src="/brand/mark.svg" alt=""><span>NAWI TestBench<span class="brand-sub">OIML R 76</span></span></a>
+  <p>Smart India Hackathon 2026 · SIH26035 · Ministry of Consumer Affairs, Food &amp; Public Distribution</p>
   <a href="https://github.com/faizanshahid00007/nawi-testbench" target="_blank" rel="noopener">Source on GitHub</a>
 </footer>
 
