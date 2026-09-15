@@ -157,3 +157,32 @@ if (!has('ET-77120')) {
       failed: Object.entries(evaluation.results).filter(([, t]) => t.verdict === 'fail').map(([k, t]) => [k, t.note, t.points.filter((p) => p.verdict === 'fail').slice(0, 3)]) }, null, 1));
   }
 }
+
+if (!has('DS-560-0421')) {
+  // Multi-interval retail scale: e1 = 2 g to 6 kg, e2 = 5 g to 15 kg (3.2.2).
+  const instrument = store.instruments.create({
+    manufacturer: 'Essae-Teraoka', manufacturerAddress: 'Bengaluru, Karnataka', applicant: 'Essae-Teraoka Pvt. Ltd.', applicantAddress: 'Bengaluru, Karnataka',
+    model: 'DS-560 MI', serial: 'DS-560-0421', instrumentType: 'Retail scale (price computing)', indicatingType: 'digital', electronic: 1, rangeType: 'multi-interval',
+    accuracyClass: 'III', max: 15000, min: 40, e: 2, d: 2, units: 'g', tareMaxAdditive: 5990,
+    ranges: JSON.stringify([{ e: 2, max: 6000, d: 2 }, { e: 5, max: 15000, d: 5 }]),
+    powerSupply: 'external', nominalVoltage: 12, minOperatingVoltage: 9.6, softwareVersion: 'R3.02', loadCell: '1 × single-point 20 kg', interfaces: 'RS-232, USB',
+    limitingTilt: 'Level indicator with ring marking', createdBy: engineer
+  });
+  const session = store.sessions.create({
+    instrumentId: instrument.id, rulesetId: 'oiml-r76-2006', context: 'initial', purpose: 'verification',
+    laboratory: lab, technician: engineer, temperature: 23.6, humidity: 47, applicationRef: 'LM/V/2026/0912',
+    testDate: '2026-09-11', createdBy: engineer
+  });
+  store.environment.add({ sessionId: session.id, stage: 'Start of test', temperature: 23.6, humidity: 47, pressure: 1007, voltage: 12.1 });
+  const o = (testKey, label, load, indication, extra = {}) =>
+    store.observations.add({ sessionId: session.id, testKey, label, load, indication, recordedBy: engineer, ...extra });
+  // Range 1 (e = 2 g): 40 g Min, 1 kg and 4 kg band changes, 6 kg range change. Range 2 (e = 5 g): 10 kg band change, 15 kg Max.
+  for (const [load, dl] of [[40, 0.6], [500, 0.8], [1000, 1.0], [2000, 0.6], [4000, 1.2], [6000, 0.8], [8000, 2.0], [10000, 2.5], [12000, 1.5], [15000, 3.0]])
+    o('weighing', `${load >= 1000 ? load / 1000 + ' kg' : load + ' g'}${load === 40 ? ' (Min)' : load === 6000 ? ' (range change)' : load === 15000 ? ' (Max)' : ''}`, load, load, { addedLoad: dl, direction: 'increasing' });
+  for (const [load, dl] of [[10000, 2.0], [4000, 1.0], [1000, 0.8]]) o('weighing', `${load / 1000} kg`, load, load, { addedLoad: dl, direction: 'decreasing' });
+  o('discrimination', 'At 3 kg (e = 2 g)', 3000, 3000, { indicationAfter: 3002 });
+  o('discrimination', 'At 10 kg (e = 5 g)', 10000, 10000, { indicationAfter: 10005 });
+  o('zero', 'After zero set', 0, 0);
+  store.audit.log({ sessionId: session.id, actor: engineer, action: 'report.open', detail: `${session.reference} for Essae-Teraoka DS-560 MI (multi-interval)` });
+  console.log(`seeded Essae-Teraoka DS-560 MI (multi-interval) and report ${session.reference} (verification, in progress)`);
+}

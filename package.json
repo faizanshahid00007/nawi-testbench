@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "test": "node --test test/",
     "seed": "node src/seed.js",
-    "share": "ngrok http 4178 --url=https://penalize-bogus-residency.ngrok-free.dev"
+    "share": "ngrok http 4178 --url=https://penalize-bogus-residency.ngrok-free.dev",
+    "test:browser": "node scripts/browser-smoke.cjs"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
@@ -17,5 +18,8 @@
   "engines": {
     "node": ">=20"
   },
-  "repository": "github:faizanshahid00007/nawi-testbench"
+  "repository": "github:faizanshahid00007/nawi-testbench",
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
 }

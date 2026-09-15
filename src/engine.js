@@ -31,6 +31,27 @@ function rowFor(cls, e) {
     e >= r.eMin - EPS && (r.eMax === null || e <= r.eMax + EPS)) || null;
 }
 
+// Partial weighing ranges. A single-range instrument has one; a multi-interval
+// or multiple-range instrument has several, each with its own e (and d) up to
+// its own Max (3.2.2, 3.2.3). Sorted by Max ascending.
+function rangesOf(instrument) {
+  let r = instrument.ranges;
+  if (typeof r === 'string') { try { r = JSON.parse(r); } catch { r = null; } }
+  if (!Array.isArray(r) || r.length === 0) return [{ e: instrument.e, max: instrument.max, d: instrument.d ?? instrument.e }];
+  return r.map((x) => ({ e: Number(x.e), max: Number(x.max), d: Number(x.d ?? x.e) }))
+    .filter((x) => x.e > 0 && x.max > 0)
+    .sort((a, b) => a.max - b.max);
+}
+
+function rangeAt(instrument, load) {
+  const ranges = rangesOf(instrument);
+  const abs = Math.abs(load);
+  for (let i = 0; i < ranges.length; i++) if (abs <= ranges[i].max + EPS) return { ...ranges[i], index: i };
+  return { ...ranges[ranges.length - 1], index: ranges.length - 1 };
+}
+
+const isMultiRange = (instrument) => rangesOf(instrument).length > 1;
+
 /* ------------------------------------------------------------------------ */
 /* Classification                                                             */
 /* ------------------------------------------------------------------------ */
@@ -38,9 +59,28 @@ function rowFor(cls, e) {
 function classCheck(ruleset, instrument) {
   const cls = ruleset.classes[instrument.accuracyClass];
   if (!cls) throw new Error(`unknown accuracy class: ${instrument.accuracyClass}`);
+  const ranges = rangesOf(instrument);
   const n = intervals(instrument);
   const row = rowFor(cls, instrument.e);
   const findings = [];
+
+  // Every partial weighing range must itself satisfy Table 3 (3.2.2 / 3.2.3).
+  const rangeChecks = ranges.map((r, i) => {
+    const rr = rowFor(cls, r.e);
+    const ni = r.max / r.e;
+    const ok = rr ? ni >= rr.nMin - EPS && (rr.nMax === null || ni <= rr.nMax + EPS) : false;
+    return { index: i, e: r.e, max: r.max, d: r.d, n: round(ni, 3), nMin: rr ? rr.nMin : null, nMax: rr ? rr.nMax : null, withinRange: ok };
+  });
+  if (ranges.length > 1) {
+    for (let i = 1; i < ranges.length; i++) {
+      if (ranges[i].e <= ranges[i - 1].e + EPS) findings.push(`partial range ${i + 1} has e = ${ranges[i].e}, not larger than e = ${ranges[i - 1].e} of range ${i}; ranges must have increasing e`);
+    }
+    for (const rc of rangeChecks) {
+      if (rc.nMin === null) findings.push(`range ${rc.index + 1}: e = ${rc.e} is outside every band defined for class ${instrument.accuracyClass}`);
+      else if (!rc.withinRange) findings.push(`range ${rc.index + 1}: n = ${rc.n} (Max ${rc.max} / e ${rc.e}) is outside ${rc.nMin}–${rc.nMax ?? '∞'} for class ${instrument.accuracyClass}`);
+      if (rc.d > rc.e + EPS) findings.push(`range ${rc.index + 1}: d = ${rc.d} exceeds e = ${rc.e}`);
+    }
+  }
 
   if (!row) {
     findings.push(`e = ${instrument.e} is outside every verification scale interval band defined for class ${instrument.accuracyClass}`);
@@ -73,8 +113,11 @@ function classCheck(ruleset, instrument) {
     n, designation: cls.designation, clause: cls.clause,
     row, nRange: [row.nMin, row.nMax], minCapacity: round(minCapacity),
     withinRange, minCapacityOk,
-    changeoverRequired: instrument.d > ruleset.roundingEliminationRatio * instrument.e + EPS,
+    changeoverRequired: ranges.some((r) => r.d > ruleset.roundingEliminationRatio * r.e + EPS),
     temperature: tempRange,
+    ranges: rangeChecks,
+    multiRange: ranges.length > 1,
+    nAxis: Math.max(...ranges.map((r) => r.max / r.e)),
     findings
   };
 }
@@ -138,16 +181,18 @@ function bandFor(ruleset, accuracyClass, loadInE) {
 }
 
 function mpe(ruleset, instrument, load, context) {
-  const loadInE = Math.abs(load) / instrument.e;
+  const range = rangeAt(instrument, load);
+  const e = range.e;
+  const loadInE = Math.abs(load) / e;
   const band = bandFor(ruleset, instrument.accuracyClass, loadInE);
   if (!band) {
     throw new Error(
       `load of ${loadInE.toFixed(1)}e exceeds the highest band defined for class ${instrument.accuracyClass}`
     );
   }
-  const base = band.mpeE * instrument.e;
+  const base = band.mpeE * e;
   const limit = context === 'in-service' ? base * ruleset.inServiceMultiplier : base;
-  return { limit, band, loadInE, multiplier: context === 'in-service' ? ruleset.inServiceMultiplier : 1 };
+  return { limit, band, loadInE, e, rangeIndex: range.index, multiplier: context === 'in-service' ? ruleset.inServiceMultiplier : 1 };
 }
 
 // Loads at which the mpe steps, for a given instrument: the band boundaries
@@ -155,10 +200,19 @@ function mpe(ruleset, instrument, load, context) {
 // loads at or near these.
 function bandBoundaries(ruleset, instrument) {
   const cls = ruleset.classes[instrument.accuracyClass];
-  return cls.bands
-    .map(([, hi]) => hi)
-    .filter((hi) => hi !== null && hi * instrument.e < instrument.max - EPS)
-    .map((hi) => round(hi * instrument.e));
+  const ranges = rangesOf(instrument);
+  const out = new Set();
+  let prevMax = 0;
+  for (const r of ranges) {
+    for (const [, hi] of cls.bands) {
+      if (hi === null) continue;
+      const load = hi * r.e;
+      if (load > prevMax + EPS && load < r.max - EPS) out.add(round(load));
+    }
+    if (r.max < instrument.max - EPS) out.add(round(r.max));       // range change point
+    prevMax = r.max;
+  }
+  return [...out].sort((a, b) => a - b);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -174,17 +228,18 @@ function correctedIndication({ indication, e, addedLoad }) {
 }
 
 function evaluatePoint({ ruleset, instrument, context, load, indication, addedLoad, zeroError }) {
+  const eAtLoad = rangeAt(instrument, load).e;
   const corrected =
     addedLoad === null || addedLoad === undefined
       ? indication
-      : correctedIndication({ indication, e: instrument.e, addedLoad });
+      : correctedIndication({ indication, e: eAtLoad, addedLoad });
   const rawError = corrected - load;
   // A.4.4.3: the error prior to rounding is corrected by the error determined at,
   // or close to, zero before the measurement -- Ec = E - E0 -- and it is Ec that
   // is compared against the mpe.
   const e0 = zeroError ?? 0;
   const error = rawError - e0;
-  const { limit, band, loadInE, multiplier } = mpe(ruleset, instrument, load, context);
+  const { limit, band, loadInE, multiplier, e, rangeIndex } = mpe(ruleset, instrument, load, context);
   return {
     load,
     indication,
@@ -193,9 +248,11 @@ function evaluatePoint({ ruleset, instrument, context, load, indication, addedLo
     rawError: round(rawError),
     zeroError: round(e0),
     error: round(error),
-    errorInE: round(error / instrument.e, 3),
+    errorInE: round(error / e, 3),
+    e,
+    rangeIndex,
     mpe: round(limit),
-    mpeInE: round(limit / instrument.e, 3),
+    mpeInE: round(limit / e, 3),
     band: band.hi === null ? `> ${band.lo}e` : `${band.lo}–${band.hi}e`,
     loadInE: round(loadInE, 1),
     multiplier,
@@ -330,9 +387,10 @@ function evalDeviation(spec, instrument, observations) {
 function evalDiscrimination(spec, instrument, observations) {
   // 3.8.2.2 keys both the added load and the required change to the actual
   // scale interval d, not to the verification scale interval e.
-  const added = spec.addedWeightD * instrument.d;
-  const required = spec.minChangeD * instrument.d;
   const points = observations.map((o) => {
+    const d = rangeAt(instrument, o.load).d;
+    const added = spec.addedWeightD * d;
+    const required = spec.minChangeD * d;
     const change = o.indicationAfter - o.indication;
     return {
       label: o.label,
@@ -341,7 +399,8 @@ function evalDiscrimination(spec, instrument, observations) {
       indicationAfter: o.indicationAfter,
       addedLoad: round(added),
       change: round(change),
-      changeInE: round(change / instrument.e, 3),
+      changeInE: round(change / rangeAt(instrument, o.load).e, 3),
+      d,
       mpe: round(required),
       remark: o.remark ?? null,
       verdict: change >= required - EPS ? 'pass' : 'fail'
@@ -511,7 +570,7 @@ function evalSpan(spec, instrument, points) {
   if (points.length) {
     const errors = points.map((p) => p.error);
     const variation = Math.max(...errors) - Math.min(...errors);
-    const limit = Math.max(0.5 * instrument.e, 0.5 * points[0].mpe);
+    const limit = Math.max(0.5 * (points[0].e || instrument.e), 0.5 * points[0].mpe);
     Object.assign(result, {
       variation: round(variation), variationInE: round(variation / instrument.e, 3),
       variationLimit: round(limit),
@@ -575,8 +634,9 @@ function evalCreep(ruleset, spec, instrument, context, observations) {
              note: 'record the indication at 0, 15 and 30 minutes after loading' };
   }
   const first = readings[0];
-  const limit30 = spec.within30MinE * instrument.e;
-  const limit1530 = spec.between15and30E * instrument.e;
+  const eAt = rangeAt(instrument, first.load).e;
+  const limit30 = spec.within30MinE * eAt;
+  const limit1530 = spec.between15and30E * eAt;
   const mpeAtLoad = mpe(ruleset, instrument, first.load, context).limit;
   const at = (t) => readings.find((r) => Math.abs(r.timeMin - t) <= 1);
 
@@ -586,7 +646,7 @@ function evalCreep(ruleset, spec, instrument, context, observations) {
     const limit = within30 ? limit30 : mpeAtLoad;
     return {
       label: r.label, timeMin: r.timeMin, load: r.load, indication: r.indication,
-      drift: round(drift), driftInE: round(drift / instrument.e, 3),
+      drift: round(drift), driftInE: round(drift / eAt, 3),
       mpe: round(limit), window: within30 ? 'first 30 min' : 'four-hour criterion',
       remark: r.remark ?? null,
       verdict: Math.abs(drift) <= limit + EPS ? 'pass' : 'fail'
@@ -774,9 +834,10 @@ function validateObservation({ ruleset, instrument, spec, obs, existing = [], pu
       warnings.push(`load ${obs.load} ${u} is below Min = ${instrument.min} ${u}; the mpe does not apply below Min`);
   }
 
+  const dAt = Number.isFinite(obs.load) ? rangeAt(instrument, obs.load).d : instrument.d;
   if (!Number.isFinite(obs.indication)) errors.push('indication must be a number');
   else {
-    if (!isMultiple(obs.indication, instrument.d)) warnings.push(`indication ${obs.indication} is not a multiple of d = ${instrument.d}`);
+    if (!isMultiple(obs.indication, dAt)) warnings.push(`indication ${obs.indication} is not a multiple of d = ${dAt}${isMultiRange(instrument) ? ' for this range' : ''}`);
     if (Number.isFinite(obs.load) && Math.abs(obs.indication - obs.load) > Math.max(10 * instrument.e, 0.05 * instrument.max))
       warnings.push(`indication differs from the load by ${round(obs.indication - obs.load)} ${u}; check for a transcription error`);
   }
@@ -784,7 +845,8 @@ function validateObservation({ ruleset, instrument, spec, obs, existing = [], pu
   if (obs.addedLoad !== null && obs.addedLoad !== undefined) {
     if (!spec.changeover && spec.kind !== 'zero-drift') warnings.push('additional load recorded for a test that does not use the changeover method');
     if (obs.addedLoad < 0) errors.push('additional load cannot be negative');
-    if (obs.addedLoad > instrument.e + EPS) warnings.push(`additional load ${obs.addedLoad} ${u} exceeds one e; the display should change over within one interval`);
+    const eAt = Number.isFinite(obs.load) ? rangeAt(instrument, obs.load).e : instrument.e;
+    if (obs.addedLoad > eAt + EPS) warnings.push(`additional load ${obs.addedLoad} ${u} exceeds one e (${eAt} ${u} in this range); the display should change over within one interval`);
     if (obs.addedLoad === 0) warnings.push('additional load of 0 means the display changed over with no extra weight; the reading was on the point of changing');
   }
 
@@ -802,7 +864,7 @@ function validateObservation({ ruleset, instrument, spec, obs, existing = [], pu
 
   if (spec.kind === 'discrimination' || spec.kind === 'deviation') {
     if (obs.indicationAfter === null || obs.indicationAfter === undefined) errors.push('the second indication is required');
-    else if (!isMultiple(obs.indicationAfter, instrument.d)) warnings.push(`second indication ${obs.indicationAfter} is not a multiple of d`);
+    else if (!isMultiple(obs.indicationAfter, dAt)) warnings.push(`second indication ${obs.indicationAfter} is not a multiple of d`);
     if (spec.kind === 'discrimination' && Number.isFinite(obs.indicationAfter) && obs.indicationAfter < obs.indication)
       warnings.push('indication fell after adding weight; check the readings');
   }
@@ -852,6 +914,9 @@ function round(v, p = 6) {
 }
 
 module.exports = {
+  rangesOf,
+  rangeAt,
+  isMultiRange,
   loadRuleset,
   toGrams,
   requiredRuns,

@@ -1,0 +1,57 @@
+.sign-in { min-height: 100vh; }
+.aurora.fixed { position: fixed; inset: 0; z-index: 0; }
+.login-layout { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); min-height: 100vh; }
+.login-story { padding: 40px 64px 40px 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
+.login-statement { max-width: 520px; margin-top: 60px; }
+.login-statement h1 { color: var(--on-dark); font-size: clamp(40px, 4.6vw, 62px); line-height: 1.04; margin: 22px 0 20px; }
+.login-statement p { font-size: 17px; line-height: 1.6; }
+.login-steps { display: grid; gap: 14px; margin-top: 36px; }
+.login-steps > div { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--line-dark); }
+.login-steps span { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-family: var(--mono); font-size: 12px; color: var(--teal); background: rgba(45,212,191,.1); border: 1px solid rgba(45,212,191,.25); }
+.login-steps b { display: block; color: var(--on-dark); font-size: 14.5px; }
+.login-steps small { color: var(--on-dark-3); font-size: 13px; line-height: 1.5; }
+.login-story-foot { display: flex; align-items: center; gap: 16px; color: var(--on-dark-3); font-size: 13px; }
+.login-story-foot .lcd-frame { padding: 5px 7px 4px; border-radius: 6px; }
+
+.login-form-area { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 48px; position: relative; }
+.back-home { position: absolute; top: 28px; right: 40px; color: var(--on-dark-2); text-decoration: none; font-size: 13.5px; }
+.back-home:hover { color: var(--on-dark); }
+.login-panel { width: 100%; max-width: 460px; padding: 34px 36px 30px; border-radius: 24px; box-shadow: 0 40px 100px -40px rgba(0,0,0,.8); }
+.login-panel h2 { color: var(--on-dark); font-size: 34px; margin-top: 14px; }
+.login-intro { margin: 8px 0 22px; font-size: 14.5px; }
+.login-panel form { display: grid; gap: 16px; }
+.login-panel label { color: var(--on-dark-2); }
+.login-panel input { background: rgba(255,255,255,.05); border-color: var(--line-dark-2); color: var(--on-dark); }
+.login-panel input::placeholder { color: var(--on-dark-3); }
+.login-panel input:focus { border-color: var(--teal); box-shadow: 0 0 0 4px rgba(45,212,191,.15); }
+.password-field { position: relative; }
+.password-field input { padding-right: 70px; }
+.password-field button { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: 1px solid var(--line-dark-2); color: var(--on-dark-2); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.password-field button:hover { color: var(--on-dark); border-color: var(--on-dark-3); }
+#submit-login { width: 100%; margin-top: 6px; }
+#login-msg { min-height: 20px; font-size: 13.5px; color: var(--on-dark-2); margin-top: -4px; }
+.demo-accounts { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line-dark); }
+.demo-accounts-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.demo-accounts-head b { color: var(--on-dark); font-size: 14.5px; }
+.demo-accounts-head span { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--on-dark-3); font-weight: 700; }
+.demo-accounts > p { font-size: 13px; margin: 6px 0 12px; }
+.role-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.role-options button { text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line-dark-2); background: rgba(255,255,255,.04); color: var(--on-dark); cursor: pointer; transition: all var(--t-fast); }
+.role-options button:hover, .role-options button[aria-pressed="true"] { border-color: rgba(45,212,191,.5); background: rgba(45,212,191,.1); }
+.role-options b { display: block; font-size: 13.5px; }
+.role-options small { color: var(--on-dark-3); font-size: 12px; }
+.credential-note { font-size: 12.5px; color: var(--on-dark-3); margin-top: 12px; }
+.credential-note code { font-family: var(--mono); color: var(--teal); }
+.login-help { display: inline-flex; margin-top: 20px; font-size: 13.5px; }
+
+@media (max-width: 960px) {
+  .login-layout { grid-template-columns: 1fr; }
+  .login-story { padding: 28px 24px 10px; gap: 20px; }
+  .login-statement { margin-top: 16px; }
+  .login-statement h1 { font-size: 38px; }
+  .login-steps { display: none; }
+  .login-story-foot { display: none; }
+  .login-form-area { padding: 20px 20px 50px; }
+  .back-home { position: static; margin-bottom: 14px; align-self: flex-start; }
+  .login-panel { padding: 26px 22px; }
+}

@@ -4,72 +4,60 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sign in — NAWI TestBench</title>
-<link rel="stylesheet" href="site.css">
-<style>
-  body { background: var(--housing); color: var(--housing-ink); min-height: 100vh; }
-  .login { max-width: 980px; margin: 0 auto; padding: 70px 24px 60px; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 60px; align-items: center; }
-  .brand h1 { font-size: 54px; color: var(--housing-ink); max-width: 12em; }
-  .brand p { color: var(--housing-dim); font-size: 17px; margin-top: 18px; max-width: 34em; line-height: 1.55; }
-  .brand .lcd-frame { margin-bottom: 26px; }
-  .panel { background: var(--surface); color: var(--ink); border-radius: var(--radius-lg); padding: 28px 30px 26px; }
-  .panel h2 { font-size: 30px; margin-bottom: 4px; }
-  .panel .lede { color: var(--ink-2); margin-bottom: 20px; font-size: 14px; }
-  .panel .grid { grid-template-columns: 1fr; gap: 14px; }
-  .panel .actions { margin-top: 4px; justify-content: space-between; }
-  .roles { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
-  .roles table { font-size: 13px; margin-top: 6px; }
-  .roles td { padding: 5px 6px; border-bottom: 0; }
-  .roles code { font-family: ui-monospace, Menlo, monospace; background: var(--surface-2); padding: 1px 6px; border-radius: 3px; color: var(--ink); }
-  .roles button.link { color: var(--accent); }
-  @media (max-width: 860px) { .login { grid-template-columns: 1fr; gap: 30px; padding-top: 30px; } .brand h1 { font-size: 40px; } }
-</style>
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/brand/icon-180.png">
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/landing.css">
+<link rel="stylesheet" href="/login.css">
 </head>
-<body>
-<header class="mast">
-  <a class="mark" href="/"><b>NAWI TestBench</b><span>OIML R 76 type evaluation</span></a>
-  <nav><a href="/">Overview</a><a href="/app" class="on">Workbench</a><a href="/standards">The standard</a></nav>
-</header>
-<main class="login">
-  <div class="brand">
-    <div class="lcd-frame" id="lcd"></div>
-    <h1>The report is where approvals fail. Not here.</h1>
-    <p>Record what the indicator shows. The workbench picks the permissible-error band, applies the changeover point, corrects for zero, and keeps the clause behind every verdict.</p>
-  </div>
-  <div class="panel">
-    <h2>Sign in</h2>
-    <p class="lede">Viewers read, engineers record, approvers sign and issue certificates.</p>
-    <form class="grid" id="form-login">
-      <div><label>Username</label><input name="username" autocomplete="username" required autofocus></div>
-      <div><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div>
-      <div class="actions"><button class="btn" type="submit">Sign in</button><span class="hint" id="login-msg"></span></div>
-    </form>
-    <div class="roles">Demonstration accounts. Click one to fill the form; change the passwords under Users once signed in as admin.
-      <table><tbody>
-        <tr><td><button class="link" data-u="admin">admin</button></td><td><code>admin123</code></td><td>Everything, including user management</td></tr>
-        <tr><td><button class="link" data-u="engineer">engineer</button></td><td><code>engineer123</code></td><td>Register instruments, record tests, close reports</td></tr>
-        <tr><td><button class="link" data-u="approver">approver</button></td><td><code>approver123</code></td><td>Review, approve, sign, issue certificates</td></tr>
-        <tr><td><button class="link" data-u="viewer">viewer</button></td><td><code>viewer123</code></td><td>Read-only access to the repository</td></tr>
-      </tbody></table>
+<body class="landing grain sign-in">
+<a class="skip-link" href="#form-login">Skip to sign in</a>
+<div class="aurora fixed" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="gridlines"></div></div>
+<main class="login-layout">
+  <section class="login-story">
+    <a class="brand-lockup" href="/"><img src="/brand/mark.svg" alt=""><span>NAWI TestBench<span class="brand-sub">OIML R 76 · SIH26035</span></span></a>
+    <div class="login-statement">
+      <div class="eyebrow"><span class="live-dot"></span> The laboratory, connected</div>
+      <h1>Every reading.<br>Every reason.<br><span class="gradient-text">One record.</span></h1>
+      <p>A workspace for the people who make measurement trustworthy: record what the indicator shows, get the verdict with its clause, sign it, certify it.</p>
+      <div class="login-steps">
+        <div><span>01</span><div><b>Record with confidence</b><small>Instrument particulars and validated observations, with a live readout.</small></div></div>
+        <div><span>02</span><div><b>Understand every verdict</b><small>MPE band, changeover and zero correction, shown column by column.</small></div></div>
+        <div><span>03</span><div><b>Deliver a traceable report</b><small>PDF, Word, signed approval and a QR-verified certificate.</small></div></div>
+      </div>
     </div>
-  </div>
+    <div class="login-story-foot"><span class="lcd-frame" id="login-lcd"></span><span>Rule set OIML R 76-1:2006 (E)</span></div>
+  </section>
+
+  <section class="login-form-area">
+    <a class="back-home" href="/">← Back to overview</a>
+    <div class="login-panel glass">
+      <div class="eyebrow">Your laboratory workspace</div>
+      <h2>Welcome back.</h2>
+      <p class="login-intro">Sign in to continue your evaluations.</p>
+      <form id="form-login">
+        <div><label for="username">Username</label><input id="username" name="username" autocomplete="username" placeholder="Enter your username" required></div>
+        <div><label for="password">Password</label><div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><button type="button" id="show-password" aria-label="Show password" aria-pressed="false">Show</button></div></div>
+        <button class="btn lg" id="submit-login" type="submit">Sign in to workspace</button>
+        <p id="login-msg" role="status" aria-live="polite"></p>
+      </form>
+      <div class="demo-accounts">
+        <div class="demo-accounts-head"><b>Exploring the project?</b><span>Demo accounts</span></div>
+        <p>Choose a role to fill the sample credentials, then sign in.</p>
+        <div class="role-options">
+          <button data-u="viewer" type="button"><b>Viewer</b><small>Explore reports</small></button>
+          <button data-u="engineer" type="button"><b>Engineer</b><small>Record and evaluate</small></button>
+          <button data-u="approver" type="button"><b>Approver</b><small>Review and sign</small></button>
+          <button data-u="admin" type="button"><b>Admin</b><small>Manage the workspace</small></button>
+        </div>
+        <p class="credential-note">Sample passwords follow <code>username123</code>. Change them under Users after the first sign-in.</p>
+      </div>
+      <a class="login-help text-link" href="/demo.html">First visit? Follow the presentation guide</a>
+    </div>
+  </section>
 </main>
-<script src="readout.js"></script>
-<script>
-const f = document.getElementById('form-login');
-document.getElementById('lcd').innerHTML = sevenSegment('0.000', { digits: 6, height: 74, unit: 'kg', annunciators: [['ZERO', true], ['NET', false], ['STABLE', true]] });
-powerOn();
-document.querySelectorAll('[data-u]').forEach((b) => b.addEventListener('click', () => { f.username.value = b.dataset.u; f.password.value = `${b.dataset.u}123`; f.password.focus(); }));
-f.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const body = Object.fromEntries(new FormData(f).entries());
-  const msg = document.getElementById('login-msg');
-  msg.textContent = 'Signing in…'; msg.style.color = '';
-  const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  if (res.ok) { location.href = '/app' + location.hash; return; }
-  const data = await res.json().catch(() => ({}));
-  msg.textContent = data.error || 'Sign in failed';
-  msg.style.color = 'var(--fail)';
-});
-</script>
+<script src="/readout.js"></script>
+<script>document.getElementById('login-lcd').innerHTML = sevenSegment('0.000', { digits: 6, height: 26, unit: 'kg', annunciators: [['ZERO', true], ['NET', false], ['STABLE', true]] }); powerOn();</script>
+<script src="/login.js"></script>
 </body>
 </html>

@@ -12,11 +12,39 @@ const docx = require('./docx');
 const pdf = require('./pdf');
 const auth = require('./auth');
 
+const qr = require('./qr');
+const fs = require('fs');
+
 const app = express();
 app.disable('x-powered-by');
+app.set('trust proxy', 1);
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
 app.use(express.json({ limit: '12mb' }));
 app.use(auth.attachUser);
 auth.seedUsers();
+
+// Login throttling: after 8 failures from one address, wait 15 minutes.
+const LOGIN_FAILS = new Map();
+function loginAllowed(ip) {
+  const rec = LOGIN_FAILS.get(ip);
+  if (!rec) return true;
+  if (rec.until && rec.until > Date.now()) return false;
+  if (rec.until) LOGIN_FAILS.delete(ip);
+  return true;
+}
+function loginFailed(ip) {
+  const rec = LOGIN_FAILS.get(ip) || { count: 0, first: Date.now() };
+  if (Date.now() - rec.first > 15 * 60 * 1000) { rec.count = 0; rec.first = Date.now(); }
+  rec.count += 1;
+  if (rec.count >= 8) rec.until = Date.now() + 15 * 60 * 1000;
+  LOGIN_FAILS.set(ip, rec);
+}
 
 const pub = (file) => path.join(__dirname, '..', 'public', file);
 
@@ -25,6 +53,7 @@ const pub = (file) => path.join(__dirname, '..', 'public', file);
 app.get('/login', (req, res) => (req.user ? res.redirect('/app') : res.sendFile(pub('login.html'))));
 app.get('/app', (req, res) => (req.user ? res.sendFile(pub('app.html')) : res.redirect('/login')));
 app.get('/standards', (req, res) => res.sendFile(pub('standards.html')));
+app.get('/guide.pdf', (req, res) => res.sendFile(path.join(__dirname, '..', 'docs', 'NAWI-TestBench-User-Guide.pdf')));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 /* ---- helpers -------------------------------------------------------------- */
@@ -102,8 +131,10 @@ function baseUrl(req) {
 /* ---- auth ----------------------------------------------------------------- */
 
 app.post('/api/login', wrap((req, res) => {
+  if (!loginAllowed(req.ip)) { const e = new Error('too many failed sign-in attempts; try again in 15 minutes'); e.status = 429; throw e; }
   const result = auth.login(req.body.username, req.body.password);
-  if (!result) { const e = new Error('incorrect username or password'); e.status = 401; throw e; }
+  if (!result) { loginFailed(req.ip); const e = new Error('incorrect username or password'); e.status = 401; throw e; }
+  LOGIN_FAILS.delete(req.ip);
   auth.setCookie(res, result.token);
   res.json(result.user);
 }));
@@ -167,6 +198,14 @@ app.post('/api/me/password', signedIn, wrap((req, res) => {
 /* ---- reference data ------------------------------------------------------- */
 
 app.get('/api/rulesets', wrap((req, res) => res.json(engine.listRulesets())));
+
+// QR code as SVG for any short text; relative paths are resolved against this host.
+app.get('/api/qr.svg', wrap((req, res) => {
+  let t = String(req.query.text || '');
+  if (!t || t.length > 200) throw new Error('text is required and must be at most 200 characters');
+  if (t.startsWith('/')) t = `${baseUrl(req)}${t}`;
+  res.type('image/svg+xml').setHeader('Cache-Control', 'public, max-age=3600').send(qr.svg(t, { size: 160, dark: '#0b1220' }));
+}));
 app.get('/api/rulesets/:id', wrap((req, res) => res.json(engine.loadRuleset(req.params.id))));
 
 app.get('/api/stats', signedIn, wrap((req, res) => {
@@ -195,6 +234,25 @@ function instrumentFromBody(body) {
     tareMaxAdditive: number(body.tareMaxAdditive), tareMaxSubtractive: number(body.tareMaxSubtractive),
     limitingTilt: text(body.limitingTilt), notes: text(body.notes)
   };
+  // Partial weighing ranges for multi-interval / multiple-range instruments.
+  let ranges = body.ranges;
+  if (typeof ranges === 'string') { try { ranges = JSON.parse(ranges); } catch { throw new Error('ranges must be a JSON array of { e, max, d }'); } }
+  if (i.rangeType !== 'single' && Array.isArray(ranges)) {
+    ranges = ranges.map((r) => ({ e: Number(r.e), max: Number(r.max), d: r.d === '' || r.d === undefined || r.d === null ? Number(r.e) : Number(r.d) }))
+      .filter((r) => r.e > 0 || r.max > 0);
+    if (ranges.length < 2) throw new Error('a multi-interval or multiple-range instrument needs at least two partial ranges');
+    if (ranges.length > 3) throw new Error('at most three partial ranges are supported');
+    for (const [k, r] of ranges.entries()) if (!(r.e > 0 && r.max > 0 && r.d > 0)) throw new Error(`range ${k + 1}: e, Max and d must be positive numbers`);
+    ranges.sort((a, b) => a.max - b.max);
+    for (let k = 1; k < ranges.length; k++) {
+      if (ranges[k].max <= ranges[k - 1].max) throw new Error('partial ranges must have increasing Max');
+      if (ranges[k].e <= ranges[k - 1].e) throw new Error('partial ranges must have increasing e');
+    }
+    i.ranges = JSON.stringify(ranges);
+    i.max = ranges[ranges.length - 1].max; i.e = ranges[0].e; i.d = ranges[0].d;
+  } else {
+    i.ranges = null; i.rangeType = 'single';
+  }
   for (const k of ['max', 'min', 'e', 'd']) if (!(i[k] > 0)) throw new Error(`${k} must be a positive number`);
   if (i.min >= i.max) throw new Error('Min must be smaller than Max');
   if ((i.tempMin === null) !== (i.tempMax === null)) throw new Error('give both temperature limits or neither');
@@ -239,8 +297,10 @@ app.get('/api/instrument-preview', signedIn, wrap((req, res) => {
   const ruleset = engine.loadRuleset(req.query.rulesetId || 'oiml-r76-2006');
   const i = { accuracyClass: req.query.accuracyClass, max: Number(req.query.max), min: Number(req.query.min),
               e: Number(req.query.e), d: Number(req.query.d), units: req.query.units || 'g',
-              tempMin: number(req.query.tempMin), tempMax: number(req.query.tempMax) };
-  res.json(engine.classCheck(ruleset, i));
+              tempMin: number(req.query.tempMin), tempMax: number(req.query.tempMax), ranges: req.query.ranges || null };
+  const ranges = engine.rangesOf(i);
+  if (ranges.length > 1) { i.max = ranges[ranges.length - 1].max; i.e = ranges[0].e; i.d = ranges[0].d; }
+  res.json({ ...engine.classCheck(ruleset, i), boundaries: engine.bandBoundaries(ruleset, i) });
 }));
 
 /* ---- sessions ------------------------------------------------------------- */
@@ -305,44 +365,121 @@ app.patch('/api/sessions/:id', canWrite, wrap((req, res) => {
 
 /* ---- observations --------------------------------------------------------- */
 
+// Validate and store one observation. Shared by the form route and CSV import.
+function addObservation(req, session, body) {
+  require_(body, ['testKey', 'label', 'load', 'indication']);
+  const ruleset = engine.loadRuleset(session.rulesetId);
+  const spec = ruleset.tests[body.testKey];
+  if (!spec) throw new Error(`unknown test: ${body.testKey}`);
+  if (spec.kind === 'checklist') throw new Error('checklist items are recorded through /checks');
+  const instrument = store.instruments.get(session.instrumentId);
+  const na = engine.applicability(spec, instrument);
+  if (!na.applicable) throw new Error(`${spec.label} does not apply to this instrument: ${na.reason}`);
+  const obs = {
+    sessionId: session.id,
+    testKey: body.testKey,
+    label: text(body.label),
+    load: Number(body.load),
+    tare: number(body.tare),
+    indication: Number(body.indication),
+    indicationAfter: number(body.indicationAfter),
+    addedLoad: number(body.addedLoad),
+    zeroError: number(body.zeroError),
+    direction: body.direction === 'decreasing' ? 'decreasing' : 'increasing',
+    condition: text(body.condition),
+    timeMin: number(body.timeMin),
+    remark: text(body.remark),
+    recordedBy: actor(req)
+  };
+  const existing = store.observations.forSession(session.id).filter((o) => o.testKey === obs.testKey);
+  const check = engine.validateObservation({ ruleset, instrument, spec: { ...spec, key: obs.testKey }, obs, existing, purpose: session.purpose });
+  if (!check.ok) { const e = new Error(check.errors.join('; ')); e.status = 422; throw e; }
+  obs.warnings = check.warnings;
+  const saved = store.observations.add(obs);
+  log(req, session.id, 'observation.add', `${spec.label}: ${obs.label}`);
+  return { observation: saved, warnings: check.warnings };
+}
+
 app.post('/api/sessions/:id/observations', canWrite, wrap((req, res) => {
   const id = Number(req.params.id);
   const session = store.sessions.get(id);
   if (!session) throw new Error('no such report');
   mustBeOpen(session);
-  require_(req.body, ['testKey', 'label', 'load', 'indication']);
-  const ruleset = engine.loadRuleset(session.rulesetId);
-  const spec = ruleset.tests[req.body.testKey];
-  if (!spec) throw new Error(`unknown test: ${req.body.testKey}`);
-  if (spec.kind === 'checklist') throw new Error('checklist items are recorded through /checks');
-  const instrument = store.instruments.get(session.instrumentId);
-  const na = engine.applicability(spec, instrument);
-  if (!na.applicable) throw new Error(`${spec.label} does not apply to this instrument: ${na.reason}`);
-
-  const obs = {
-    sessionId: id,
-    testKey: req.body.testKey,
-    label: text(req.body.label),
-    load: Number(req.body.load),
-    tare: number(req.body.tare),
-    indication: Number(req.body.indication),
-    indicationAfter: number(req.body.indicationAfter),
-    addedLoad: number(req.body.addedLoad),
-    zeroError: number(req.body.zeroError),
-    direction: req.body.direction === 'decreasing' ? 'decreasing' : 'increasing',
-    condition: text(req.body.condition),
-    timeMin: number(req.body.timeMin),
-    remark: text(req.body.remark),
-    recordedBy: actor(req)
-  };
-  const existing = store.observations.forSession(id).filter((o) => o.testKey === obs.testKey);
-  const check = engine.validateObservation({ ruleset, instrument, spec: { ...spec, key: obs.testKey }, obs, existing, purpose: session.purpose });
-  if (!check.ok) { const e = new Error(check.errors.join('; ')); e.status = 422; throw e; }
-  obs.warnings = check.warnings;
-  const saved = store.observations.add(obs);
-  log(req, id, 'observation.add', `${spec.label}: ${obs.label}`);
+  const { observation, warnings } = addObservation(req, session, req.body);
   const { evaluation } = loadSession(id);
-  res.json({ observation: saved, warnings: check.warnings, evaluation });
+  res.json({ observation, warnings, evaluation });
+}));
+
+/* ---- CSV import and export ------------------------------------------------ */
+
+const CSV_COLUMNS = ['testKey', 'label', 'load', 'tare', 'indication', 'indicationAfter', 'addedLoad', 'zeroError', 'direction', 'condition', 'timeMin', 'remark'];
+const csvCell = (v) => { const t = v === null || v === undefined ? '' : String(v); return /[",\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+
+function parseCsv(textIn) {
+  const rows = []; let row = []; let cell = ''; let quoted = false;
+  const src = String(textIn).replace(/^\uFEFF/, '');
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (quoted) {
+      if (ch === '"') { if (src[i + 1] === '"') { cell += '"'; i++; } else quoted = false; }
+      else cell += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && src[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter((r) => r.some((c) => c.trim() !== ''));
+}
+
+app.get('/api/observations-template.csv', wrap((req, res) => {
+  const example = [
+    ['weighing', 'Min', 100, '', 100, '', 1.5, '', 'increasing', '', '', ''],
+    ['weighing', '10 kg', 10000, '', 10000, '', 2.0, '', 'increasing', '', '', ''],
+    ['eccentricity', 'Segment 1', 10000, '', 10005, '', '', '', 'increasing', '', '', ''],
+    ['repeatability', 'Run 1', 15000, '', 15000, '', 2.5, '', 'increasing', '', '', ''],
+    ['discrimination', 'At 10 kg', 10000, '', 10000, 10005, '', '', '', '', '', ''],
+    ['tare', 'Net 8 kg on 2 kg tare', 10000, 2000, 8000, '', 2.0, '', 'increasing', '', '', ''],
+    ['zero', 'After zero set', 0, '', 0, '', '', '', '', '', '', ''],
+    ['temperature', '15 kg', 15000, '', 15000, '', 2.5, 0, 'increasing', '40', '', 'chamber at 40 °C'],
+    ['warmup', 'Near Max', 15000, '', 15000, '', 2.0, 0.5, '', '', 5, ''],
+    ['creep', 't = 15 min', 15000, '', 15000, '', '', '', '', '', 15, ''],
+    ['zeroReturn', 'After 30 min at Max', 15000, '', 0, 0, '', '', '', '', '', ''],
+    ['tilt', 'Max', 15000, '', 15000, '', 2.0, 0, '', 'Tilted lengthwise', '', '']
+  ];
+  const body = [CSV_COLUMNS, ...example].map((r) => r.map(csvCell).join(',')).join('\n');
+  res.type('text/csv').setHeader('Content-Disposition', 'attachment; filename="nawi-observations-template.csv"').send(body + '\n');
+}));
+
+app.get('/api/sessions/:id/observations.csv', signedIn, wrap((req, res) => {
+  const { session, observations } = loadSession(Number(req.params.id));
+  const body = [CSV_COLUMNS, ...observations.map((o) => CSV_COLUMNS.map((c) => o[c]))].map((r) => r.map(csvCell).join(',')).join('\n');
+  res.type('text/csv').setHeader('Content-Disposition', `attachment; filename="${session.reference.replace(/\//g, '-')}-observations.csv"`).send(body + '\n');
+}));
+
+app.post('/api/sessions/:id/observations/import', canWrite, wrap((req, res) => {
+  const id = Number(req.params.id);
+  const session = store.sessions.get(id);
+  if (!session) throw new Error('no such report');
+  mustBeOpen(session);
+  require_(req.body, ['csv']);
+  const rows = parseCsv(req.body.csv);
+  if (rows.length < 2) throw new Error('the CSV needs a header row and at least one observation');
+  const header = rows[0].map((h) => h.trim());
+  const unknown = header.filter((h) => !CSV_COLUMNS.includes(h));
+  if (unknown.length) throw new Error(`unknown column(s): ${unknown.join(', ')}. Download the template for the accepted columns.`);
+  for (const must of ['testKey', 'label', 'load', 'indication']) if (!header.includes(must)) throw new Error(`missing column: ${must}`);
+  const added = []; const rejected = []; const warned = [];
+  for (let r = 1; r < rows.length; r++) {
+    const body = Object.fromEntries(header.map((h, i) => [h, (rows[r][i] ?? '').trim()]));
+    try {
+      const out = addObservation(req, session, body);
+      added.push(out.observation.id);
+      if (out.warnings.length) warned.push({ row: r + 1, label: body.label, warnings: out.warnings });
+    } catch (err) { rejected.push({ row: r + 1, label: body.label, error: err.message }); }
+  }
+  log(req, id, 'observation.import', `${added.length} added, ${rejected.length} rejected`);
+  res.json({ added: added.length, rejected, warned, evaluation: loadSession(id).evaluation });
 }));
 
 app.delete('/api/observations/:id', canWrite, wrap((req, res) => {
@@ -541,9 +678,9 @@ app.get('/api/sessions/:id/certificate.pdf', signedIn, wrap(async (req, res) => 
 app.get('/verify/:certNo', wrap((req, res) => {
   const row = store.db.prepare('SELECT id FROM sessions WHERE certificateNo = ?').get(req.params.certNo);
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const page = (title, body, ok) => `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
-<link rel="stylesheet" href="/site.css"><style>.v{max-width:640px;margin:80px auto;padding:0 24px}.v .card{padding:32px}.st{font-family:var(--serif);font-size:30px;color:${ok ? 'var(--pass)' : 'var(--fail)'};margin-bottom:12px}</style></head>
-<body><div class="v"><div class="card"><div class="st">${esc(title)}</div>${body}</div></div></body></html>`;
+  const page = (title, body, ok, qrSvg = '') => `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/site.css"><style>.v{max-width:720px;margin:60px auto;padding:0 24px}.v .card{padding:32px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start}.st{font-family:var(--serif);font-size:30px;color:${ok ? 'var(--pass)' : 'var(--fail)'};margin-bottom:12px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:22px;color:var(--ink-2)}.brand img{width:40px}.brand b{font-family:var(--serif);font-size:22px;color:var(--ink)}@media(max-width:600px){.v .card{grid-template-columns:1fr}}</style></head>
+<body><div class="v"><div class="brand"><img src="/brand/logo.svg" alt=""><b>NAWI TestBench</b><span>certificate verification</span></div><div class="card"><div><div class="st">${esc(title)}</div>${body}</div>${qrSvg}</div></div></body></html>`;
   if (!row) return res.status(404).type('html').send(page('No such certificate', `<p>No certificate numbered <b>${esc(req.params.certNo)}</b> has been issued by this system.</p>`, false));
   const { session, instrument, evaluation } = loadSession(row.id);
   const current = session.status === 'approved';
@@ -554,7 +691,8 @@ app.get('/verify/:certNo', wrap((req, res) => {
      <div class="kv"><span class="k">Class</span><span>${esc(instrument.accuracyClass)} · Max ${esc(instrument.max)} ${esc(instrument.units)} · e = ${esc(instrument.e)} ${esc(instrument.units)}</span></div>
      <div class="kv"><span class="k">Outcome</span><span>${esc(evaluation.overall)}</span></div>
      <div class="kv"><span class="k">Approved</span><span>${esc(session.approvedBy)} · ${session.approvedAt ? new Date(session.approvedAt).toLocaleDateString('en-IN', { dateStyle: 'long' }) : ''}</span></div>
-     <div class="kv"><span class="k">Signature</span><span style="word-break:break-all;font-size:13px">${esc(session.signature)}</span></div>`, current));
+     <div class="kv"><span class="k">Signature</span><span style="word-break:break-all;font-size:13px">${esc(session.signature)}</span></div>`, current,
+    qr.svg(`${baseUrl(req)}/verify/${encodeURIComponent(session.certificateNo)}`, { size: 140, title: 'QR code of this verification address' })));
 }));
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'no such endpoint' }));

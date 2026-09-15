@@ -15,10 +15,31 @@ constants live in `rulesets/oiml-r76-2006.json`; the procedures live in `src/eng
 
 Any failure is reported as a *classification finding*; findings block the certificate.
 
+## 1a. Multi-interval and multiple-range instruments (3.2.2, 3.2.3)
+
+An instrument may have up to three partial weighing ranges, each with its own verification
+scale interval `e_i` (and `d_i`) up to its own `Max_i`. They are stored with the instrument and
+sorted by `Max_i`. The engine then:
+
+* classifies every partial range on its own: `n_i = Max_i / e_i` must lie in the Table 3 range
+  for the class and the value of `e_i`; `e_i` must increase from range to range; `d_i ≤ e_i`;
+* takes `Min` against `e_1` (the smallest interval);
+* uses `e_i` of the range the load falls in for the MPE band, for the changeover-point step
+  `½ e_i`, for the discrimination weight `1.4 d_i`, for the creep limits and for the span
+  variation limit;
+* keeps the limits written against the smallest interval on `e_1`: zero-setting (0.25 e),
+  zero return (0.5 e₁, 3.9.4.2), no-load tilt shift (2 e), temperature effect on zero (1 e per
+  5 °C);
+* adds every range-change load `Max_i` to the loads the weighing test must include, alongside the
+  band boundaries of each range.
+
+The report and the certificate list the partial ranges with their `n_i`, and every point in a
+load table shows the `e` it was judged against when the ranges differ.
+
 ## 2. Maximum permissible error (3.5.1, Table 6; 3.5.2)
 
-The load is expressed in verification scale intervals, `m = L / e`, and looked up in
-the band table for the class. Boundaries are inclusive at the top of each band.
+The load is expressed in verification scale intervals, `m = L / e` (with `e` of the partial
+range the load falls in), and looked up in the band table for the class. Boundaries are inclusive at the top of each band.
 
 | Class | ± 0.5 e | ± 1 e | ± 1.5 e |
 |---|---|---|---|

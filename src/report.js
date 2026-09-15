@@ -1,5 +1,10 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+const qr = require('./qr');
+const LOGO = fs.readFileSync(path.join(__dirname, '..', 'public', 'brand', 'logo.svg'), 'utf8').replace(/<svg /, '<svg class="logo" ');
+
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -34,6 +39,7 @@ const RANGE_LABELS = { single: 'Single range', 'multi-interval': 'Multi-interval
 function loadTable(test, u, extraCols = []) {
   const anyTare = test.points.some((p) => p.tare !== null && p.tare !== undefined);
   const anyChangeover = test.points.some((p) => p.addedLoad !== null && p.addedLoad !== undefined);
+  const anyMulti = new Set(test.points.map((p) => p.e)).size > 1;
   const arrow = (p) => (p.direction === 'decreasing' ? '&#8593;' : '&#8595;');
   const head = extraCols.map((c) => `<th${c.align === 'r' ? ' class="r"' : ''}>${c.label}</th>`).join('');
   return `<table><thead><tr>
@@ -41,7 +47,7 @@ function loadTable(test, u, extraCols = []) {
     <th class="r">Load, L</th>${anyTare ? '<th class="r">Tare, T</th>' : ''}
     <th class="r">Indication, I</th>${anyChangeover ? '<th class="r">Add. load, &Delta;L</th>' : ''}
     <th class="r">Error, E</th><th class="r">E<sub>0</sub></th><th class="r">Corrected error, E<sub>c</sub></th>
-    <th class="r">mpe</th><th class="c">Result</th>
+    ${anyMulti ? '<th class="r">e</th>' : ''}<th class="r">mpe</th><th class="c">Result</th>
     </tr></thead><tbody>${test.points.map((p) => `<tr>
       <td>${esc(p.label)}</td>${extraCols.map((c) => `<td${c.align === 'r' ? ' class="r"' : ''}>${c.value(p)}</td>`).join('')}
       <td class="c mono">${arrow(p)}</td>
@@ -49,7 +55,7 @@ function loadTable(test, u, extraCols = []) {
       <td class="r">${fmt(p.indication, u)}</td>
       ${anyChangeover ? `<td class="r">${p.addedLoad === null || p.addedLoad === undefined ? '—' : fmt(p.addedLoad, u)}</td>` : ''}
       <td class="r">${sign(p.rawError)}</td><td class="r">${sign(p.zeroError)}</td>
-      <td class="r ${p.verdict}">${sign(p.error)}</td><td class="r">${p.mpe === null ? '—' : `± ${fmt(p.mpe, u)}`}</td>
+      <td class="r ${p.verdict}">${sign(p.error)}</td>${anyMulti ? `<td class="r">${fmt(p.e, u)}</td>` : ''}<td class="r">${p.mpe === null ? '—' : `± ${fmt(p.mpe, u)}`}</td>
       <td class="c">${badge(p.verdict)}</td>
     </tr>${p.remark ? `<tr class="remark"><td colspan="20">Remark: ${esc(p.remark)}</td></tr>` : ''}`).join('')}</tbody></table>
     <p class="formula">E = I + &frac12;e &minus; &Delta;L &minus; L &nbsp;·&nbsp;
@@ -210,6 +216,10 @@ h1{font-size:17pt;font-weight:600;margin:.35em 0 .15em;letter-spacing:-.01em}
 .ref{font-family:Menlo,Consolas,monospace;font-size:10pt;color:var(--soft)}
 .lab{text-align:right;font-size:8.6pt;color:var(--soft)}
 .lab b{display:block;color:var(--ink);font-size:10pt}
+.brandrow{display:flex;gap:5mm;align-items:flex-start}
+.brandrow .logo{width:16mm;height:16mm;flex:none;margin-top:1mm}
+.seal{display:grid;grid-template-columns:1fr auto;gap:5mm;align-items:center}
+.seal svg{width:26mm;height:26mm}
 .verdict-strip{display:flex;align-items:center;gap:4mm;margin-top:4mm}
 .verdict-strip .big{font-size:12pt;font-weight:600}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm 8mm;margin-bottom:6mm}
@@ -257,12 +267,12 @@ footer{margin-top:8mm;padding-top:3mm;border-top:1px solid var(--line);font-size
 </style></head><body>
 
 <header>
-  <div>
+  <div class="brandrow">${LOGO}<div>
     <div class="eyebrow">${session.purpose === 'verification' ? 'Verification test report' : 'Type evaluation test report'} · Non-automatic weighing instrument · OIML R 76</div>
     <h1>${esc(instrument.manufacturer)} ${esc(instrument.model)}</h1>
     <div class="ref">${esc(session.reference)}${session.certificateNo ? ` · Certificate ${esc(session.certificateNo)}` : ''}</div>
     <div class="verdict-strip">${badge(evaluation.overall)}<span class="big">${overallText}</span></div>
-  </div>
+  </div></div>
   <div class="lab"><b>${esc(session.laboratory)}</b>
     Report generated ${dt(generatedAt)}<br>
     Rule set ${esc(ruleset.label)}<br>
@@ -293,8 +303,10 @@ footer{margin-top:8mm;padding-top:3mm;border-top:1px solid var(--line);font-size
       <h4>Metrological characteristics</h4>
       <div class="kv"><span class="k">Accuracy class</span><span class="v">${esc(instrument.accuracyClass)} — ${esc(c.designation)}</span></div>
       <div class="kv"><span class="k">Max / Min</span><span class="v">${fmt(instrument.max, u)} / ${fmt(instrument.min, u)}</span></div>
-      <div class="kv"><span class="k">e / d</span><span class="v">${fmt(instrument.e, u)} / ${fmt(instrument.d, u)}</span></div>
-      <div class="kv"><span class="k">n = Max / e</span><span class="v">${fmt(c.n)} ${c.withinRange ? '' : '(outside permitted range)'}</span></div>
+      ${c.multiRange
+        ? c.ranges.map((r) => `<div class="kv"><span class="k">Partial range ${r.index + 1}</span><span class="v">e = ${fmt(r.e, u)}, d = ${fmt(r.d, u)}, up to ${fmt(r.max, u)}, n = ${fmt(r.n)}${r.withinRange ? '' : ' (outside permitted range)'}</span></div>`).join('')
+        : `<div class="kv"><span class="k">e / d</span><span class="v">${fmt(instrument.e, u)} / ${fmt(instrument.d, u)}</span></div>
+      <div class="kv"><span class="k">n = Max / e</span><span class="v">${fmt(c.n)} ${c.withinRange ? '' : '(outside permitted range)'}</span></div>`}
       <div class="kv"><span class="k">Min lower limit</span><span class="v">${fmt(c.minCapacity, u)} ${c.minCapacityOk ? '' : '(not met)'}</span></div>
       <div class="kv"><span class="k">Rounding elimination</span><span class="v">${c.changeoverRequired ? 'required (d &gt; 0.2 e)' : 'not required'}</span></div>
       <div class="kv"><span class="k">Tare, additive / subtractive</span><span class="v">${instrument.tareMaxAdditive ? `T = +${fmt(instrument.tareMaxAdditive, u)}` : '—'} / ${instrument.tareMaxSubtractive ? `T = −${fmt(instrument.tareMaxSubtractive, u)}` : '—'}</span></div>
@@ -360,8 +372,8 @@ ${attachments.length ? `<section class="summary"><h2>${session.remarks ? 6 : 5} 
   <div><b>${esc(session.approvedBy || '')}</b>${session.approvedBy ? `Approved by · ${date(session.approvedAt)}` : 'Approved by'}${session.approvalNote ? `<br>${esc(session.approvalNote)}` : ''}</div>
 </div>
 
-${session.signature ? `<div class="seal">Digital signature (SHA-256 over the approved observations, verdicts and approval record):
-  <span class="mono">${esc(session.signature)}</span>${verifyUrl ? `<br>Verify at ${esc(verifyUrl)}` : ''}</div>` : ''}
+${session.signature ? `<div class="seal"><div>Digital signature (SHA-256 over the approved observations, verdicts and approval record):
+  <span class="mono">${esc(session.signature)}</span>${verifyUrl ? `<br>Verify at ${esc(verifyUrl)} or scan the code.` : ''}</div>${verifyUrl ? qr.svg(verifyUrl, { size: 100, title: 'Verification QR code' }) : ''}</div>` : ''}
 
 ${audit.length ? `<table class="audit" style="margin-top:6mm"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Detail</th></tr></thead>
   <tbody>${audit.slice(-12).map((a) => `<tr><td>${dt(a.at)}</td><td>${esc(a.actor || '')}</td><td>${esc(a.action)}</td><td>${esc(a.detail || '')}</td></tr>`).join('')}</tbody></table>` : ''}

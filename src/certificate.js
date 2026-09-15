@@ -1,6 +1,10 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+const qr = require('./qr');
 const { fmt, SUPPLY_LABELS } = require('./report');
+const LOGO = fs.readFileSync(path.join(__dirname, '..', 'public', 'brand', 'logo.svg'), 'utf8').replace(/<svg /, '<svg class="logo" ');
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -27,7 +31,12 @@ body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(
 .sheet{width:210mm;height:297mm;padding:16mm 18mm;margin:0 auto;position:relative;overflow:hidden;page-break-after:avoid}
 .frame{position:absolute;inset:8mm;border:1.5px solid var(--accent);pointer-events:none}
 .frame::after{content:'';position:absolute;inset:2mm;border:.5px solid var(--brass)}
-.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--accent);padding-bottom:3.5mm}
+.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--accent);padding-bottom:3.5mm;gap:5mm}
+.top .logo{width:17mm;height:17mm;flex:none}
+.top .titles{flex:1}
+.qr{position:absolute;left:18mm;bottom:27mm;width:24mm;height:24mm}
+.qr svg{width:24mm;height:24mm;display:block}
+.qr small{display:block;font-size:6.6pt;color:var(--soft);text-align:center;margin-top:1mm}
 .eyebrow{font-size:7.6pt;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:600}
 h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:22pt;margin:2mm 0 .5mm;letter-spacing:-.01em}
 .sub{color:var(--soft);font-size:9.6pt}
@@ -48,7 +57,7 @@ td,th{padding:1.4mm 2mm;border-bottom:1px solid #e3e9eb;text-align:left}
 th{font-size:7.6pt;color:var(--accent);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
 td.c{text-align:center;font-weight:600;color:#0f6b3f}
 .statement{margin-top:4mm;padding:3mm 4.5mm;border:1px solid var(--line);background:#f7fafa;font-size:9.2pt;line-height:1.45;max-width:118mm}
-.sig{position:absolute;left:18mm;bottom:27mm;display:grid;grid-template-columns:1fr 1fr;gap:12mm;width:118mm}
+.sig{position:absolute;left:46mm;bottom:27mm;display:grid;grid-template-columns:1fr 1fr;gap:10mm;width:104mm}
 .sig div{border-top:1px solid var(--ink);padding-top:2mm;font-size:9pt;color:var(--soft)}
 .sig b{display:block;color:var(--ink);font-size:10.5pt}
 .seal{position:absolute;right:26mm;bottom:30mm;width:38mm;height:38mm;border:2px solid var(--brass);border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--brass);font-size:7.4pt;letter-spacing:.14em;text-transform:uppercase;font-weight:700;transform:rotate(-8deg);opacity:.85}
@@ -58,7 +67,8 @@ footer{position:absolute;left:18mm;right:18mm;bottom:10mm;font-size:7pt;color:va
 </style></head><body><div class="sheet"><div class="frame"></div>
 
 <div class="top">
-  <div>
+  ${LOGO}
+  <div class="titles">
     <div class="eyebrow">${esc(session.laboratory)}</div>
     <h1>Certificate of Conformity</h1>
     <div class="sub">${purpose} of a non-automatic weighing instrument · OIML R 76</div>
@@ -79,7 +89,8 @@ applicable to accuracy class <b>${esc(instrument.accuracyClass)}</b> (${esc(c.de
   <span class="k">Category</span><span class="v">${esc(instrument.instrumentType || '—')}, ${esc(instrument.indicatingType || 'digital')} indication</span>
   <span class="k">Accuracy class</span><span class="v">${esc(instrument.accuracyClass)} — ${esc(c.designation)}</span>
   <span class="k">Max / Min</span><span class="v">${fmt(instrument.max, u)} / ${fmt(instrument.min, u)}</span>
-  <span class="k">e / d / n</span><span class="v">${fmt(instrument.e, u)} / ${fmt(instrument.d, u)} / ${fmt(c.n)}</span>
+  ${c.multiRange ? c.ranges.map((r) => `<span class="k">Range ${r.index + 1}</span><span class="v">e = ${fmt(r.e, u)}, up to ${fmt(r.max, u)}, n = ${fmt(r.n)}</span>`).join('')
+    : `<span class="k">e / d / n</span><span class="v">${fmt(instrument.e, u)} / ${fmt(instrument.d, u)} / ${fmt(c.n)}</span>`}
   <span class="k">Temperature limits</span><span class="v">${fmt(c.temperature.min, '°C')} / ${fmt(c.temperature.max, '°C')}</span>
   <span class="k">Power supply</span><span class="v">${esc(SUPPLY_LABELS[instrument.powerSupply] || instrument.powerSupply || '—')}${instrument.nominalVoltage ? `, ${fmt(instrument.nominalVoltage, 'V')}` : ''}</span>
   ${instrument.softwareVersion ? `<span class="k">Software identification</span><span class="v mono">${esc(instrument.softwareVersion)}</span>` : ''}
@@ -100,6 +111,7 @@ applicable to accuracy class <b>${esc(instrument.accuracyClass)}</b> (${esc(c.de
 </div>
 
 <div class="seal"><span>Conforms<br>OIML R 76<br>Class ${esc(instrument.accuracyClass)}</span></div>
+${verifyUrl ? `<div class="qr">${qr.svg(verifyUrl, { size: 90, title: 'Scan to verify this certificate' })}<small>Scan to verify</small></div>` : ''}
 
 <footer>
   This certificate is valid only together with test report ${esc(session.reference)} and refers solely to the instrument identified above.

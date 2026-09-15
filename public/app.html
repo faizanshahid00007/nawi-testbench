@@ -4,28 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Workbench — NAWI TestBench</title>
+<link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="site.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
 <header class="mast">
-  <a class="mark" href="/"><b>NAWI TestBench</b><span>OIML R 76 type evaluation</span></a>
+  <a class="mark" href="/"><img src="/assets/logo.svg" alt=""><b>NAWI TestBench</b><span>OIML R 76 type evaluation</span></a>
   <nav>
     <a href="/">Overview</a>
     <a href="/app" class="on">Workbench</a>
     <a href="/standards">The standard</a>
+    <a href="/guide.pdf" target="_blank" rel="noopener">Help</a>
     <span class="who" id="who"></span>
   </nav>
 </header>
 
 <div class="wrap shell">
-  <aside class="side">
+  <aside class="side" aria-label="Workspace navigation">
+    <div class="side-label">LABORATORY</div>
     <button class="tab on" data-view="dashboard">Dashboard</button>
     <button class="tab" data-view="tests">Tests</button>
     <button class="tab" data-view="instruments">Instruments</button>
     <button class="tab" data-view="new" data-role="engineer">New test</button>
     <button class="tab" data-view="users" data-role="admin" hidden>Users</button>
+    <button class="tab" data-view="account">My account</button>
+    <a class="side-guide" href="/demo.html">Presentation guide ↗<small>A clear path through the project</small></a>
     <div class="side-foot" id="side-stats"></div>
   </aside>
 
@@ -35,7 +40,7 @@
     <section class="view on" id="view-dashboard">
       <div class="view-head">
         <div>
-          <h2>Dashboard</h2>
+          <h2>Laboratory overview</h2>
           <p class="lede">Testing activity and report status across the laboratory. Every figure below is live.</p>
         </div>
         <div class="actions" data-role="engineer">
@@ -43,7 +48,8 @@
           <button class="btn" data-goto="new">New test</button>
         </div>
       </div>
-      <div class="console" id="console"></div>
+      <div class="dashboard-welcome"><div><div class="eyebrow">FROM OBSERVATION TO EVIDENCE</div><h3>Good decisions begin with a clear record.</h3><p>Capture the readings. Inspect the calculations. Keep every test connected to its instrument and evaluation rule set.</p></div><a class="btn ghost" href="/demo.html">Explore the workflow ↗</a></div>
+      <div class="console" id="console" aria-label="Laboratory statistics"></div>
       <div class="dash-grid">
         <div class="card">
           <div class="card-head"><h3>Recent tests</h3><button class="link-btn" data-goto="tests">See all</button></div>
@@ -56,6 +62,7 @@
           <div id="activity"></div>
         </div>
       </div>
+      <div class="dashboard-resources"><a href="/standards"><b>Standards explorer ↗</b><span>Inspect accuracy classes and permissible errors.</span></a><a href="/demo.html"><b>Presentation guide ↗</b><span>Walk through the project in five focused steps.</span></a><a href="/#live-lab"><b>Interactive test bench ↗</b><span>Explain a passing and a failing observation.</span></a></div>
     </section>
 
     <!-- ============================== tests ============================== -->
@@ -69,16 +76,17 @@
       </div>
       <div class="card">
         <form class="filters" id="filters">
-          <input name="q" placeholder="Search reference, certificate, applicant, manufacturer, model or serial">
-          <select name="status"><option value="">Any status</option><option value="draft">In progress</option><option value="complete">Closed, awaiting approval</option><option value="approved">Approved</option></select>
-          <select name="outcome"><option value="">Any outcome</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="incomplete">Incomplete</option></select>
-          <select name="accuracyClass"><option value="">Any class</option><option>I</option><option>II</option><option>III</option><option>IIII</option></select>
-          <select name="purpose"><option value="">Any purpose</option><option value="type-approval">Type approval</option><option value="verification">Verification</option></select>
+          <input aria-label="Search reports" name="q" placeholder="Search reference, certificate, applicant, manufacturer, model or serial">
+          <select name="status" aria-label="Filter by status"><option value="">Any status</option><option value="draft">In progress</option><option value="complete">Closed, awaiting approval</option><option value="approved">Approved</option></select>
+          <select name="outcome" aria-label="Filter by outcome"><option value="">Any outcome</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="incomplete">Incomplete</option></select>
+          <select name="accuracyClass" aria-label="Filter by accuracy class"><option value="">Any class</option><option>I</option><option>II</option><option>III</option><option>IIII</option></select>
+          <select name="purpose" aria-label="Filter by purpose"><option value="">Any purpose</option><option value="type-approval">Type approval</option><option value="verification">Verification</option></select>
           <input name="from" type="date" title="Opened from">
           <input name="to" type="date" title="Opened to">
           <button class="btn ghost" type="submit">Apply</button>
           <button class="btn quiet" type="reset" id="filters-reset">Clear</button>
         </form>
+        <div class="actions" style="justify-content:flex-end;margin-bottom:14px"><button class="btn ghost sm" id="export-register" type="button">Export filtered register · CSV</button></div>
         <div id="sessions-table"></div>
       </div>
     </section>
@@ -121,6 +129,16 @@
               </div>
               <div><label>Range type</label>
                 <select name="rangeType"><option value="single">Single range</option><option value="multi-interval">Multi-interval</option><option value="multiple-range">Multiple range</option></select>
+              </div>
+              <div class="span4 ranges-editor" id="ranges-editor" hidden>
+                <label>Partial weighing ranges (3.2.2 / 3.2.3), smallest first. Max and e above are taken from these.</label>
+                <div class="ranges-rows">
+                  <div class="hd"><span></span><span>e (verification interval)</span><span>Max of range</span><span>d (blank = e)</span></div>
+                  <div class="rw"><span>Range 1</span><input data-r="0" data-k="e" type="number" step="any" placeholder="2"><input data-r="0" data-k="max" type="number" step="any" placeholder="6000"><input data-r="0" data-k="d" type="number" step="any"></div>
+                  <div class="rw"><span>Range 2</span><input data-r="1" data-k="e" type="number" step="any" placeholder="5"><input data-r="1" data-k="max" type="number" step="any" placeholder="15000"><input data-r="1" data-k="d" type="number" step="any"></div>
+                  <div class="rw"><span>Range 3</span><input data-r="2" data-k="e" type="number" step="any" placeholder="optional"><input data-r="2" data-k="max" type="number" step="any"><input data-r="2" data-k="d" type="number" step="any"></div>
+                </div>
+                <input type="hidden" name="ranges">
               </div>
             </div>
           </fieldset>
@@ -263,12 +281,21 @@
       <div class="card" style="margin-top:20px"><div id="users-table"></div></div>
     </section>
 
+    <section class="view" id="view-account">
+      <div class="view-head"><div><h2>My account</h2><p class="lede">Your workspace profile and sign-in credentials.</p></div></div>
+      <div class="card" style="max-width:620px"><h3>Account details</h3><div id="account-details" style="margin:18px 0 28px"></div><h3>Change password</h3><p class="lede">Use at least eight characters. Your current password is required to save a change.</p>
+      <form id="form-password" class="grid" style="grid-template-columns:1fr">
+      <div><label for="current-password">Current password</label><input id="current-password" name="current" type="password" autocomplete="current-password" required></div>
+      <div><label for="new-password">New password</label><input id="new-password" name="password" type="password" autocomplete="new-password" minlength="8" required></div>
+      <div><label for="confirm-password">Confirm new password</label><input id="confirm-password" name="confirm" type="password" autocomplete="new-password" minlength="8" required></div>
+      <div><button class="btn" type="submit">Update password</button></div><div id="password-msg" role="status" aria-live="polite"></div></form></div>
+    </section>
     <section class="view" id="view-session"></section>
 
   </main>
 </div>
 
-<div id="toast" class="toast" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="chart.js"></script>
 <script src="readout.js"></script>

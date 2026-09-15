@@ -58,6 +58,7 @@ function go(name) {
   if (name === 'instruments') loadInstruments();
   if (name === 'new') loadInstrumentOptions();
   if (name === 'users') loadUsers();
+  if (name === 'account') loadAccount();
   history.replaceState(null, '', name === 'dashboard' ? '/app' : `/app#${name}`);
 }
 
@@ -86,7 +87,7 @@ async function loadStats() {
 async function loadDashboard() {
   const s = await loadStats();
   const meter = (n, l, sub, view, filter) => `<button class="meter" data-tile="${view}" data-filter="${esc(filter || '')}">
-    <span class="lcd-frame">${sevenSegment(String(n), { digits: 3, height: 58 })}</span>
+    <span class="metric-icon" aria-hidden="true">${filter === 'status=approved' ? '✓' : filter === 'status=complete' ? '◷' : filter === 'status=draft' ? '↗' : '▤'}</span><span class="metric-value">${num(n)}</span>
     <span class="l"><b>${l}</b><span>${sub}</span></span></button>`;
   $('#console').innerHTML = [
     meter(s.total, 'Tests on record', `${s.last30Days} in 30 days`, 'tests'),
@@ -140,7 +141,7 @@ function sessionsTable(rows, compact = false) {
   return `<table><thead><tr>
       <th>Reference</th><th>Instrument</th><th class="c">Class</th>${compact ? '' : '<th>Purpose</th>'}
       <th class="c">Status</th><th class="c">Outcome</th>${compact ? '' : '<th>Certificate</th>'}<th>Opened</th>
-     </tr></thead><tbody>${rows.map((r) => `<tr class="rowlink" data-open="${r.id}">
+     </tr></thead><tbody>${rows.map((r) => `<tr class="rowlink" tabindex="0" role="link" aria-label="Open report ${esc(r.reference)}" data-open="${r.id}">
       <td>${esc(r.reference)}${r.progress && !compact ? (() => { const [a, b] = r.progress.split('/').map(Number); return `<div class="progress"><span class="pbar"><i style="width:${b ? (a / b) * 100 : 0}%"></i></span>${a} of ${b} required tests</div>`; })() : ''}</td>
       <td><b>${esc(r.manufacturer)}</b> ${esc(r.model)}<br><span class="serial">${esc(r.serial)}${r.applicant && !compact ? `, ${esc(r.applicant)}` : ''}</span></td>
       <td class="c">${esc(r.accuracyClass)}</td>
@@ -153,7 +154,10 @@ function sessionsTable(rows, compact = false) {
 }
 
 function bindOpen() {
-  $$('[data-open]').forEach((b) => b.addEventListener('click', () => openSession(Number(b.dataset.open))));
+  $$('[data-open]').forEach((b) => {
+    b.addEventListener('click', () => openSession(Number(b.dataset.open)));
+    b.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openSession(Number(b.dataset.open)); } });
+  });
 }
 
 async function loadSessions() {
@@ -167,6 +171,35 @@ async function loadSessions() {
 $('#filters').addEventListener('submit', (e) => { e.preventDefault(); loadSessions(); });
 $('#filters').addEventListener('change', (e) => { if (e.target.tagName === 'SELECT' || e.target.type === 'date') loadSessions(); });
 $('#filters-reset').addEventListener('click', () => setTimeout(loadSessions, 0));
+
+/* Account settings and a portable report register. */
+function loadAccount() {
+  $('#account-details').innerHTML = [['Name', ME.name], ['Username', ME.username], ['Role', ME.role]].map(([k,v]) => `<div class="kv"><span class="k">${k}</span><b>${esc(v)}</b></div>`).join('');
+}
+$('#form-password').addEventListener('submit', async event => {
+  event.preventDefault();
+  const f = event.currentTarget, data = formData(f), button = f.querySelector('button');
+  if (data.password !== data.confirm) return msg($('#password-msg'), 'The new passwords do not match.');
+  button.disabled = true;
+  try { await post('/api/me/password', {current:data.current, password:data.password}); f.reset(); msg($('#password-msg'), 'Your password has been updated.', 'ok'); }
+  catch(error) { msg($('#password-msg'), error.message); }
+  finally { button.disabled = false; }
+});
+$('#export-register').addEventListener('click', async event => {
+  const button = event.currentTarget; button.disabled = true;
+  try {
+    const params = new URLSearchParams();
+    for (const [k,v] of Object.entries(formData($('#filters')))) if(v) params.set(k,v);
+    const rows = await api(`/api/sessions?${params}`);
+    const fields = ['reference','manufacturer','model','serial','accuracyClass','purpose','status','overall','certificateNo','createdAt'];
+    const cell = value => { let text = String(value ?? ''); if (/^[=+@\-\t\r\n]/.test(text)) text = "'" + text; return '"' + text.replace(/"/g, '""') + '"'; };
+    const csv = [fields,...rows.map(row=>fields.map(k=>row[k]))].map(row=>row.map(cell).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], {type:'text/csv;charset=utf-8'}));
+    const link = document.createElement('a');link.href=url;link.download=`nawi-report-register-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast(`Exported ${rows.length} report${rows.length===1?'':'s'}.`);
+  } catch(error) { toast(error.message, 'err'); }
+  finally { button.disabled = false; }
+});
 
 /* ----------------------------- instruments ----------------------------- */
 
@@ -185,7 +218,7 @@ async function loadInstruments() {
         <td>${esc(r.applicant || '—')}</td><td>${esc(r.instrumentType || '—')}</td>
         <td class="c">${esc(r.accuracyClass)}</td>
         <td class="r">${num(r.max, r.units)}</td><td class="r">${num(r.min, r.units)}</td>
-        <td class="r">${num(r.e, r.units)}</td><td class="r">${num(r.d, r.units)}</td>
+        <td class="r">${num(r.e, r.units)}${r.ranges && r.rangeType !== 'single' ? '<div class="serial">multi</div>' : ''}</td><td class="r">${num(r.d, r.units)}</td>
         <td class="r"><b>${num(r.max / r.e)}</b></td>
         <td>${esc(SUPPLY[r.powerSupply] || r.powerSupply || '—')}${r.nominalVoltage ? ` ${num(r.nominalVoltage)} V` : ''}</td>
        </tr>`).join('')}</tbody></table>`;
@@ -212,7 +245,9 @@ async function showInstrument(id) {
         <div class="kv"><span class="k">Category</span><span>${esc(i.instrumentType || '—')} · ${esc(i.indicatingType)} · ${Number(i.electronic) ? 'electronic' : 'non-electronic'} · ${esc(i.rangeType)}</span></div>
         <div class="kv"><span class="k">Class</span><span>${esc(i.accuracyClass)}, ${esc(c.designation)}</span></div>
         <div class="kv"><span class="k">Max / Min</span><span>${num(i.max, u)} / ${num(i.min, u)}</span></div>
-        <div class="kv"><span class="k">e / d / n</span><span>${num(i.e, u)} / ${num(i.d, u)} / ${num(c.n)} <span class="hint">(${c.nRange ? `${c.nRange[0]}–${c.nRange[1] ?? '∞'} permitted` : 'no band'})</span></span></div>
+        ${c.multiRange
+          ? `<div class="kv"><span class="k">Partial ranges</span><span>${c.ranges.map((r) => `<div>Range ${r.index + 1}: e = ${num(r.e, u)}, d = ${num(r.d, u)}, up to ${num(r.max, u)}, n = ${num(r.n)} ${r.withinRange ? '' : '<span class="serial">(outside permitted range)</span>'}</div>`).join('')}</span></div>`
+          : `<div class="kv"><span class="k">e / d / n</span><span>${num(i.e, u)} / ${num(i.d, u)} / ${num(c.n)} <span class="hint">(${c.nRange ? `${c.nRange[0]}–${c.nRange[1] ?? '∞'} permitted` : 'no band'})</span></span></div>`}
         <div class="kv"><span class="k">Tare</span><span>${i.tareMaxAdditive ? `T = +${num(i.tareMaxAdditive, u)}` : '—'} / ${i.tareMaxSubtractive ? `T = −${num(i.tareMaxSubtractive, u)}` : '—'}</span></div>
         <div class="kv"><span class="k">Temperature</span><span>${num(c.temperature.min, '°C')} to ${num(c.temperature.max, '°C')} ${c.temperature.special ? '(marked)' : '(default)'}</span></div>
         <div class="kv"><span class="k">Supply</span><span>${esc(SUPPLY[i.powerSupply] || i.powerSupply)}${i.nominalVoltage ? `, ${num(i.nominalVoltage)} V` : ''}${i.frequency ? ` ${num(i.frequency)} Hz` : ''}${supply && supply.lower !== null && supply.upper !== null ? `<br><span class="serial">test at ${num(supply.lower)} V and ${num(supply.upper)} V (3.9.3)</span>` : ''}</span></div>
@@ -244,11 +279,40 @@ function openInstrumentForm(i = null) {
   $('#instrument-form-title').textContent = i ? `Edit ${i.manufacturer} ${i.model}` : 'Register an instrument';
   $('#instrument-submit').textContent = i ? 'Save changes' : 'Save instrument';
   f.id.value = i ? i.id : '';
-  if (i) for (const [k, v] of Object.entries(i)) if (f[k] && k !== 'id') f[k].value = v ?? '';
+  if (i) for (const [k, v] of Object.entries(i)) if (f[k] && k !== 'id' && k !== 'ranges') f[k].value = v ?? '';
+  fillRanges(f, i ? i.ranges : null);
+  syncRangeEditor(f);
   $('#instrument-msg').innerHTML = '';
   previewInstrument();
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+function rangesFromForm(f) {
+  if (f.rangeType.value === 'single') return '';
+  const rows = [0, 1, 2].map((r) => ({
+    e: f.querySelector(`[data-r="${r}"][data-k="e"]`).value, max: f.querySelector(`[data-r="${r}"][data-k="max"]`).value, d: f.querySelector(`[data-r="${r}"][data-k="d"]`).value
+  })).filter((x) => x.e !== '' || x.max !== '');
+  return rows.length ? JSON.stringify(rows.map((x) => ({ e: Number(x.e), max: Number(x.max), d: x.d === '' ? Number(x.e) : Number(x.d) }))) : '';
+}
+function fillRanges(f, ranges) {
+  let list = ranges; if (typeof list === 'string') { try { list = JSON.parse(list); } catch { list = []; } }
+  [0, 1, 2].forEach((r) => { for (const k of ['e', 'max', 'd']) f.querySelector(`[data-r="${r}"][data-k="${k}"]`).value = list && list[r] ? (list[r][k] ?? '') : ''; });
+}
+function syncRangeEditor(f) {
+  const multi = f.rangeType.value !== 'single';
+  $('#ranges-editor').hidden = !multi;
+  f.max.readOnly = multi; f.e.readOnly = multi; f.d.readOnly = multi;
+  if (multi) {
+    const list = rangesFromForm(f); const arr = list ? JSON.parse(list) : [];
+    if (arr.length) { const sorted = [...arr].sort((a, b) => a.max - b.max); f.max.value = sorted[sorted.length - 1].max || ''; f.e.value = sorted[0].e || ''; f.d.value = sorted[0].d || ''; }
+  }
+  f.ranges.value = rangesFromForm(f);
+}
+const rangeChips = (i) => { let list = i.ranges; if (typeof list === 'string') { try { list = JSON.parse(list); } catch { list = null; } }
+  return Array.isArray(list) && list.length > 1 ? list.map((r, k) => `<span class="range-chip">R${k + 1}: e ${num(r.e, i.units)} to ${num(r.max, i.units)}</span>`).join('') : ''; };
+
+$('#form-instrument').rangeType.addEventListener('change', () => { syncRangeEditor($('#form-instrument')); previewInstrument(); });
+$('#ranges-editor').addEventListener('input', () => { syncRangeEditor($('#form-instrument')); previewInstrument(); });
 
 $('#btn-new-instrument').addEventListener('click', () => openInstrumentForm());
 $('#instrument-form-cancel').addEventListener('click', () => { $('#instrument-form-card').hidden = true; });
@@ -260,10 +324,15 @@ async function previewInstrument() {
     const f = $('#form-instrument');
     const out = $('#instrument-preview');
     if (!(Number(f.max.value) > 0 && Number(f.e.value) > 0)) { out.textContent = 'n = Max / e is derived and checked against the class as you type.'; return; }
-    const q = new URLSearchParams({ accuracyClass: f.accuracyClass.value, max: f.max.value, min: f.min.value || 0, e: f.e.value, d: f.d.value || f.e.value, units: f.units.value, tempMin: f.tempMin.value, tempMax: f.tempMax.value });
+    const q = new URLSearchParams({ accuracyClass: f.accuracyClass.value, max: f.max.value, min: f.min.value || 0, e: f.e.value, d: f.d.value || f.e.value, units: f.units.value, tempMin: f.tempMin.value, tempMax: f.tempMax.value, ranges: f.ranges.value });
     try {
       const c = await api(`/api/instrument-preview?${q}`);
-      out.innerHTML = `n = <b>${num(c.n)}</b> ${c.nRange ? `(${c.nRange[0]}–${c.nRange[1] ?? '∞'} permitted for class ${esc(f.accuracyClass.value)})` : ''} · Min must be ≥ ${num(c.minCapacity, f.units.value)} · changeover method ${c.changeoverRequired ? 'required (d > 0.2 e)' : 'optional'}`
+      const u = f.units.value;
+      out.innerHTML = (c.multiRange
+        ? c.ranges.map((r) => `Range ${r.index + 1}: e = ${num(r.e, u)} to ${num(r.max, u)}, n = <b>${num(r.n)}</b> ${r.nMin !== null ? `(${r.nMin}–${r.nMax ?? '∞'} permitted)` : ''}`).join(' · ')
+        : `n = <b>${num(c.n)}</b> ${c.nRange ? `(${c.nRange[0]}–${c.nRange[1] ?? '∞'} permitted for class ${esc(f.accuracyClass.value)})` : ''}`)
+        + ` · Min must be ≥ ${num(c.minCapacity, u)} · changeover method ${c.changeoverRequired ? 'required (d > 0.2 e)' : 'optional'}`
+        + (c.boundaries && c.boundaries.length ? ` · MPE changes at ${c.boundaries.map((b) => num(b, u)).join(', ')}` : '')
         + (c.findings.length ? `<div class="bad">${c.findings.map(esc).join('<br>')}</div>` : '<div class="good">Classification admissible.</div>');
     } catch (err) { out.innerHTML = `<span class="bad">${esc(err.message)}</span>`; }
   }, 250);
@@ -283,6 +352,7 @@ $('#demo-instrument').addEventListener('click', () => {
 
 $('#form-instrument').addEventListener('submit', async (e) => {
   e.preventDefault();
+  syncRangeEditor(e.target);
   const data = formData(e.target);
   const id = data.id; delete data.id;
   try {
@@ -407,6 +477,8 @@ function renderSession() {
         <button class="btn quiet" id="btn-back">All tests</button>
         <button class="btn ghost" id="btn-html">Report</button>
         <button class="btn ghost" id="btn-docx">Word</button>
+        <button class="btn ghost" id="btn-csv" title="Observations as CSV">CSV</button>
+        ${editable ? `<label class="btn ghost" title="Import observations from a CSV file" style="cursor:pointer">Import CSV<input type="file" id="csv-input" accept=".csv,text/csv" hidden></label>` : ''}
         <button class="btn" id="btn-pdf">PDF</button>
         ${session.certificateNo ? `<button class="btn brass" id="btn-cert">Certificate</button>` : ''}
       </div>
@@ -415,7 +487,7 @@ function renderSession() {
     <div class="summary">
       <div class="card">
         ${envelopeSvg({
-          bands: ruleset.classes[instrument.accuracyClass].bands, n: c.n,
+          bands: ruleset.classes[instrument.accuracyClass].bands, n: c.nAxis || c.n,
           multiplier: session.context === 'in-service' ? ruleset.inServiceMultiplier : 1,
           points: envelopePoints, height: 340,
           title: `Error envelope, class ${instrument.accuracyClass}, ${session.context === 'initial' ? 'initial verification' : 'in service'} — every load-based point`
@@ -448,7 +520,9 @@ function renderSession() {
         <div class="kv"><span class="k">Category</span><span>${esc(instrument.instrumentType || '—')} · ${esc(instrument.indicatingType)}${Number(instrument.electronic) ? ', electronic' : ''}</span></div>
         <div class="kv"><span class="k">Accuracy class</span><span>${esc(instrument.accuracyClass)}, ${esc(c.designation)}</span></div>
         <div class="kv"><span class="k">Max / Min</span><span>${num(instrument.max, u)} / ${num(instrument.min, u)}</span></div>
-        <div class="kv"><span class="k">e / d / n</span><span>${num(instrument.e, u)} / ${num(instrument.d, u)} / ${num(c.n)} <span class="hint">(${c.nRange ? `${c.nRange[0]}–${c.nRange[1] ?? '∞'}` : '—'} permitted)</span></span></div>
+        ${c.multiRange
+          ? `<div class="kv"><span class="k">Partial ranges</span><span>${c.ranges.map((r) => `<div>R${r.index + 1}: e = ${num(r.e, u)} to ${num(r.max, u)}, n = ${num(r.n)}</div>`).join('')}</span></div>`
+          : `<div class="kv"><span class="k">e / d / n</span><span>${num(instrument.e, u)} / ${num(instrument.d, u)} / ${num(c.n)} <span class="hint">(${c.nRange ? `${c.nRange[0]}–${c.nRange[1] ?? '∞'}` : '—'} permitted)</span></span></div>`}
         <div class="kv"><span class="k">Changeover method</span><span>${c.changeoverRequired ? 'Required, d > 0.2 e' : 'Optional'}</span></div>
         <div class="kv"><span class="k">Temperature limits</span><span>${num(c.temperature.min, '°C')} / ${num(c.temperature.max, '°C')}</span></div>
         <div class="kv"><span class="k">Supply</span><span>${esc(SUPPLY[instrument.powerSupply] || '—')}${instrument.nominalVoltage ? `, ${num(instrument.nominalVoltage)} V` : ''}${evaluation.supply && evaluation.supply.lower !== null && evaluation.supply.upper !== null ? ` <span class="hint">· test at ${num(evaluation.supply.lower)}–${num(evaluation.supply.upper)} V</span>` : ''}</span></div>
@@ -555,6 +629,20 @@ function bindSessionActions(editable) {
   $('#btn-docx').addEventListener('click', () => download(`/api/sessions/${id}/report.docx`, `${session.reference.replace(/\//g, '-')}.docx`));
   $('#btn-pdf').addEventListener('click', () => download(`/api/sessions/${id}/report.pdf`, `${session.reference.replace(/\//g, '-')}.pdf`, `/api/sessions/${id}/report.html`));
   $('#btn-cert')?.addEventListener('click', () => download(`/api/sessions/${id}/certificate.pdf`, `${session.certificateNo.replace(/\//g, '-')}.pdf`, `/api/sessions/${id}/certificate.html`));
+  $('#btn-csv').addEventListener('click', () => download(`/api/sessions/${id}/observations.csv`, `${session.reference.replace(/\//g, '-')}-observations.csv`));
+  $('#csv-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const csv = await file.text();
+    try {
+      const r = await post(`/api/sessions/${id}/observations/import`, { csv });
+      const parts = [`${r.added} observation${r.added === 1 ? '' : 's'} imported`];
+      if (r.warned.length) parts.push(`${r.warned.length} with warnings`);
+      if (r.rejected.length) parts.push(`${r.rejected.length} rejected: ${r.rejected.slice(0, 3).map((x) => `row ${x.row} (${x.error})`).join('; ')}${r.rejected.length > 3 ? '…' : ''}`);
+      toast(parts.join('. '), r.rejected.length ? 'warn' : '');
+      refresh();
+    } catch (err) { toast(err.message, 'err'); }
+    e.target.value = '';
+  });
 
   $('#btn-close')?.addEventListener('click', async () => {
     try {
@@ -747,19 +835,20 @@ function resultTable(t, rows, u, key, editable) {
 
   const anyTare = t.points.some((p) => p.tare !== null && p.tare !== undefined);
   const anyCo = t.points.some((p) => p.addedLoad !== null && p.addedLoad !== undefined);
+  const anyMulti = new Set(t.points.map((p) => p.e)).size > 1;
   const extra = t.kind === 'timed' ? [['Time (min)', (p) => num(p.timeMin)]]
     : t.kind === 'conditioned' ? [['Condition', (p) => esc(p.condition ?? '—')]]
     : t.kind === 'tilt' ? [['Position', (p) => esc(p.condition ?? '—')], ['Check', (p) => p.check === 'no-load shift' ? `shift ${p.shift === null || p.shift === undefined ? '—' : signed(p.shift)}` : esc(p.check || '')]] : [];
   return `<table><thead><tr><th>Point</th>${extra.map(([l]) => `<th>${l}</th>`).join('')}<th class="c">↓↑</th><th class="r">Load</th>${anyTare ? '<th class="r">Tare</th>' : ''}
     <th class="r">Indication</th>${anyCo ? '<th class="r">Added ΔL</th><th class="r">Corrected</th>' : ''}
-    <th class="r">E</th><th class="r">E₀</th><th class="r">Ec</th><th class="r">MPE</th><th class="c">Band</th><th class="c">Result</th><th></th></tr></thead>
+    <th class="r">E</th><th class="r">E₀</th><th class="r">Ec</th>${anyMulti ? '<th class="r">e</th>' : ''}<th class="r">MPE</th><th class="c">Band</th><th class="c">Result</th><th></th></tr></thead>
     <tbody>${t.points.map((p) => `<tr><td>${esc(p.label)}${flag(p)}${p.remark ? `<div class="serial">${esc(p.remark)}</div>` : ''}</td>${extra.map(([, f]) => `<td>${f(p)}</td>`).join('')}
     <td class="c">${p.direction === 'decreasing' ? '↑' : '↓'}</td><td class="r">${num(p.load, u)}</td>
     ${anyTare ? `<td class="r">${num(p.tare, u)}</td>` : ''}
     <td class="r">${num(p.indication, u)}</td>
     ${anyCo ? `<td class="r">${p.addedLoad === null || p.addedLoad === undefined ? '—' : num(p.addedLoad, u)}</td><td class="r">${num(p.corrected, u)}</td>` : ''}
     <td class="r">${signed(p.rawError)}</td><td class="r">${signed(p.zeroError)}</td>${errCell(p.error, p.verdict)}
-    <td class="r">${p.mpe === null || p.mpe === undefined ? '—' : `± ${num(p.mpe, u)}`}</td><td class="c">${esc(p.band || '')}</td>
+    ${anyMulti ? `<td class="r">${num(p.e, u)}</td>` : ''}<td class="r">${p.mpe === null || p.mpe === undefined ? '—' : `± ${num(p.mpe, u)}`}</td><td class="c">${esc(p.band || '')}</td>
     <td class="c">${badge(p.verdict)}</td><td class="r">${delBtn(p)}</td></tr>`).join('')}</tbody></table>`;
 }
 
@@ -768,12 +857,22 @@ function resultTable(t, rows, u, key, editable) {
 const decimalsOf = (d) => (String(d).split('.')[1] || '').length;
 const numOrNull = (v) => (v === '' || v === null || v === undefined ? null : Number(v));
 
+function clientRanges(instrument) {
+  let r = instrument.ranges; if (typeof r === 'string') { try { r = JSON.parse(r); } catch { r = null; } }
+  if (!Array.isArray(r) || !r.length) return [{ e: instrument.e, max: instrument.max, d: instrument.d }];
+  return r.map((x) => ({ e: Number(x.e), max: Number(x.max), d: Number(x.d ?? x.e) })).sort((a, b) => a.max - b.max);
+}
+function clientRangeAt(instrument, load) {
+  const rs = clientRanges(instrument);
+  return rs.find((x) => Math.abs(load) <= x.max + 1e-9) || rs[rs.length - 1];
+}
 function clientMpe(instrument, load, context) {
   const cls = CURRENT.ruleset.classes[instrument.accuracyClass];
-  const loadInE = Math.abs(load) / instrument.e;
+  const e = clientRangeAt(instrument, load).e;
+  const loadInE = Math.abs(load) / e;
   const band = cls.bands.find(([lo, hi]) => (lo === 0 ? loadInE >= 0 : loadInE > lo) && (hi === null || loadInE <= hi));
   if (!band) return null;
-  return band[2] * instrument.e * (context === 'in-service' ? CURRENT.ruleset.inServiceMultiplier : 1);
+  return band[2] * e * (context === 'in-service' ? CURRENT.ruleset.inServiceMultiplier : 1);
 }
 
 function livePreview(form) {
@@ -848,7 +947,8 @@ function livePreview(form) {
       const net = spec.netBasis ? load - (tare ?? 0) : load;
       const added = spec.changeover ? f('addedLoad') : null;
       const z0 = spec.zeroCorrected ? (f('zeroError') ?? session.zeroError ?? 0) : 0;
-      const corrected = added === null ? indication : indication + 0.5 * e - added;
+      const eR = clientRangeAt(instrument, net).e;
+      const corrected = added === null ? indication : indication + 0.5 * eR - added;
       const error = corrected - net - z0;
       let mpe = clientMpe(instrument, net, session.context);
       let note = '';
@@ -864,9 +964,9 @@ function livePreview(form) {
       }
       if (mpe === null) { box.innerHTML = lcd(indication, [['ZERO', false], ['NET', false], ['STABLE', true]]) + `<p class="idle">${fmt(net)} ${u} is beyond the last band for class ${instrument.accuracyClass}.</p>`; return; }
       if (spec.kind === 'span') note = `<div>Variation between measurements is judged once eight are recorded.</div>`;
-      box.innerHTML = lcd(indication, [['ZERO', Math.abs(indication) < 1e-9], ['NET', spec.netBasis && (tare ?? 0) > 0], ['STABLE', true]]) + mpeGauge({ error, mpe, e, units: u }) +
-        `<div class="calc"><div>${added === null ? `Raw reading; error = I − L${spec.zeroCorrected ? ' − E₀' : ''}.` : `Corrected indication P = ${fmt(indication)} + ${fmt(0.5 * e)} − ${fmt(added)} = <b>${fmt(corrected)} ${u}</b>`}</div>
-          <div>Load in intervals: ${fmt(net / e)} e${session.context === 'in-service' ? ', in-service limit' : ''}${z0 ? `; E₀ = ${z0 > 0 ? '+' : ''}${fmt(z0)} ${u}` : ''}</div>${note}</div>`;
+      box.innerHTML = lcd(indication, [['ZERO', Math.abs(indication) < 1e-9], ['NET', spec.netBasis && (tare ?? 0) > 0], ['STABLE', true]]) + mpeGauge({ error, mpe, e: eR, units: u }) +
+        `<div class="calc"><div>${added === null ? `Raw reading; error = I − L${spec.zeroCorrected ? ' − E₀' : ''}.` : `Corrected indication P = ${fmt(indication)} + ${fmt(0.5 * eR)} − ${fmt(added)} = <b>${fmt(corrected)} ${u}</b>`}</div>
+          <div>Load in intervals: ${fmt(net / eR)} e${eR !== e ? ` (e = ${fmt(eR)} ${u} in this range)` : ''}${session.context === 'in-service' ? ', in-service limit' : ''}${z0 ? `; E₀ = ${z0 > 0 ? '+' : ''}${fmt(z0)} ${u}` : ''}</div>${note}</div>`;
     }
   }
 }
@@ -984,7 +1084,13 @@ function entryForm(key, spec, instrument, rows, session) {
 
 function bandBoundaries(instrument) {
   const cls = CURRENT.ruleset.classes[instrument.accuracyClass];
-  return cls.bands.map(([, hi]) => hi).filter((hi) => hi !== null && hi * instrument.e < instrument.max).map((hi) => hi * instrument.e);
+  const out = new Set(); let prev = 0;
+  for (const r of clientRanges(instrument)) {
+    for (const [, hi] of cls.bands) { if (hi === null) continue; const l = hi * r.e; if (l > prev && l < r.max) out.add(l); }
+    if (r.max < instrument.max) out.add(r.max);
+    prev = r.max;
+  }
+  return [...out].sort((a, b) => a - b);
 }
 
 /* -------------------------------- routing -------------------------------- */
@@ -996,6 +1102,6 @@ function bandBoundaries(instrument) {
   const m = h.match(/^report\/(\d+)$/);
   loadStats();
   if (m) { openSession(Number(m[1])); return; }
-  if (['tests', 'instruments', 'new', 'users'].includes(h)) { go(h); return; }
+  if (['tests', 'instruments', 'new', 'users', 'account'].includes(h)) { go(h); return; }
   go('dashboard');
 })();

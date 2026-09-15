@@ -241,7 +241,7 @@ MPE from Table 6:  ±0.5 e, ±1 e or ±1.5 e depending on L / e and the class; �
 <li><b>Engineer closes.</b> Press <b>Close report</b> in the workflow box. Observations are frozen. If the battery is incomplete you are asked to confirm; the report is then filed as incomplete and cannot be certified.</li>
 <li><b>Approver reviews.</b> Sign in as an approver and open the report. The workflow box offers an optional note, <b>Return to engineer</b> (reopens it with the note) and <b>Approve and sign</b>.</li>
 <li><b>Approval signs the report.</b> A SHA-256 signature is computed over the instrument, every observation and check, every verdict and the approval record, and printed on the report. If the evaluation passed, every test required for the purpose is decided and the instrument has no classification findings, a <b>certificate number</b> like <code>NAWI-C/2026/0001</code> is issued and the <b>Certificate</b> button appears.</li>
-<li><b>Verification.</b> Anyone can open <code>/verify/&lt;certificate number&gt;</code> to confirm that the certificate exists and is current. Withdrawing the approval marks it as withdrawn.</li>
+<li><b>Verification.</b> Anyone can open <code>/verify/&lt;certificate number&gt;</code>, or scan the QR code printed on the certificate and the report, to confirm that the certificate exists and is current. Withdrawing the approval marks it as withdrawn.</li>
 </ol>
 <figure><img src="img/15-approve-box.png" alt="Approver view"><figcaption>A closed report as the approver sees it: note field, Return to engineer, Approve and sign.</figcaption></figure>
 <figure><img src="img/16-approved.png" alt="Approved report"><figcaption>An approved, certified report. The Certificate button downloads the PDF; “Withdraw and reopen” is limited to approvers.</figcaption></figure>
@@ -250,6 +250,7 @@ MPE from Table 6:  ±0.5 e, ±1 e or ±1.5 e depending on L / e and the class; �
 <h2>15 &nbsp;Reports and exports</h2>
 <table><thead><tr><th>Button / address</th><th>Format</th><th>Use</th></tr></thead><tbody>
 <tr><td>Report</td><td>HTML in a new tab</td><td>Quick review or printing from the browser.</td></tr>
+<tr><td>CSV / Import CSV</td><td>.csv</td><td>Export every observation, or import a spreadsheet in the template layout through the same validation as the forms.</td></tr>
 <tr><td>PDF</td><td>PDF, A4</td><td>The standardised test report for the file and for the applicant. Needs Chrome/Chromium on the server; otherwise the HTML opens instead.</td></tr>
 <tr><td>Word</td><td>.docx</td><td>Editable copy of the same report for laboratories that add their own cover pages.</td></tr>
 <tr><td>Certificate</td><td>PDF, one page</td><td>Certificate of conformity, only after approval of a passing report.</td></tr>
@@ -282,7 +283,9 @@ MPE from Table 6:  ±0.5 e, ±1 e or ±1.5 e depending on L / e and the class; �
 <h3>NAWI/2026/0001, Avery India CS-30 (fails)</h3>
 <p>Class III counter scale, Max 30 kg, e = d = 5 g, initial verification. At 20 kg (4000 e, band above 2000 e) the MPE is 1.5 e = 7.5 g. The display reads 20 010 g with no changeover recorded, so Ec = +10 g and the point fails; the whole evaluation therefore fails while the other nine weighing points, eccentricity, discrimination, tare, zero and the markings checklist pass. Repeatability is incomplete because only three of ten runs are recorded. Use this report to try recording, the live readout, closing and returning.</p>
 <h3>NAWI/2026/0002, Essae-Teraoka DS-852 (certified)</h3>
-<p>Class III platform scale, Max 15 kg, e = d = 5 g. All 17 tests recorded and passing, closed, approved and signed, certificate NAWI-C/2026/0001 issued. Use it to see a complete report, the Word and PDF exports, the certificate and the verify page. As an approver you can withdraw and reopen it, then close and approve it again to watch a certificate being issued.</p>
+<p>Class III platform scale, Max 15 kg, e = d = 5 g. All 17 tests recorded and passing, closed, approved and signed, certificate NAWI-C/2026/0001 issued. Use it to see a complete report, the Word and PDF exports, the certificate with its QR code and the verify page. As an approver you can withdraw and reopen it, then close and approve it again to watch a certificate being issued.</p>
+<h3>NAWI/2026/0003, Essae-Teraoka DS-560 MI (multi-interval, in progress)</h3>
+<p>Class III retail scale with two partial ranges: e = 2 g up to 6 kg and e = 5 g up to 15 kg, opened for verification. Its weighing table shows an e column, because the permissible error, the changeover step and the discrimination weight follow the range each load falls in. Use it to try the partial-range editor on the instrument form and the CSV import (Import CSV button; a template is at <code>/api/observations-template.csv</code>).</p>
 
 <h2>20 &nbsp;Troubleshooting</h2>
 <table><thead><tr><th style="width:34%">Symptom</th><th>Cause and fix</th></tr></thead><tbody>

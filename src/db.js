@@ -140,7 +140,7 @@ ensureColumns('instruments', {
   rangeType: "TEXT DEFAULT 'single'", powerSupply: "TEXT DEFAULT 'mains'",
   nominalVoltage: 'REAL', minOperatingVoltage: 'REAL', frequency: 'REAL',
   tempMin: 'REAL', tempMax: 'REAL', softwareVersion: 'TEXT', loadCell: 'TEXT', interfaces: 'TEXT',
-  tareMaxAdditive: 'REAL', tareMaxSubtractive: 'REAL', limitingTilt: 'TEXT', notes: 'TEXT', createdBy: 'TEXT'
+  tareMaxAdditive: 'REAL', tareMaxSubtractive: 'REAL', limitingTilt: 'TEXT', notes: 'TEXT', createdBy: 'TEXT', ranges: 'TEXT'
 });
 
 ensureColumns('sessions', {
@@ -159,7 +159,7 @@ const INSTRUMENT_FIELDS = [
   'manufacturer', 'model', 'serial', 'accuracyClass', 'max', 'min', 'e', 'd', 'units',
   'applicant', 'applicantAddress', 'manufacturerAddress', 'instrumentType', 'indicatingType', 'electronic',
   'rangeType', 'powerSupply', 'nominalVoltage', 'minOperatingVoltage', 'frequency', 'tempMin', 'tempMax',
-  'softwareVersion', 'loadCell', 'interfaces', 'tareMaxAdditive', 'tareMaxSubtractive', 'limitingTilt', 'notes', 'createdBy'
+  'softwareVersion', 'loadCell', 'interfaces', 'tareMaxAdditive', 'tareMaxSubtractive', 'limitingTilt', 'notes', 'createdBy', 'ranges'
 ];
 
 const instruments = {

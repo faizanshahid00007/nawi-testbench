@@ -1,0 +1,22 @@
+.demo-page { padding-top: 56px; padding-bottom: 40px; }
+.demo-page h1 { color: var(--on-dark); font-size: clamp(38px, 4.6vw, 60px); line-height: 1.05; margin-top: 18px; }
+.demo-page h1 em { font-style: normal; background: var(--grad-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.demo-intro { max-width: 640px; font-size: 16px; line-height: 1.7; margin-top: 20px; }
+.demo-layout { display: grid; grid-template-columns: 280px 1fr; gap: 28px; margin-top: 40px; align-items: start; }
+.demo-nav { display: grid; gap: 8px; position: sticky; top: 92px; }
+.demo-nav button { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid var(--line-dark); border-radius: 14px; background: rgba(255,255,255,.03); color: var(--on-dark-2); text-align: left; font-size: 14px; font-weight: 600; cursor: pointer; transition: all var(--t-fast); }
+.demo-nav button span { font-family: var(--mono); font-size: 12px; color: var(--teal); }
+.demo-nav button small { grid-column: 2; font-weight: 500; font-size: 12px; color: var(--on-dark-3); }
+.demo-nav button:hover { border-color: var(--line-dark-2); color: var(--on-dark); }
+.demo-nav button[aria-current="step"] { background: var(--grad-brand-soft); border-color: rgba(45,212,191,.4); color: var(--on-dark); }
+.demo-content { padding: 32px 36px; border-radius: 22px; background: rgba(255,255,255,.04); border: 1px solid var(--line-dark-2); min-height: 420px; }
+.demo-content h2 { color: var(--on-dark); font-size: 30px; margin: 10px 0 14px; }
+.demo-content p, .demo-content li { color: var(--on-dark-2); font-size: 15px; line-height: 1.65; }
+.demo-content ol { padding-left: 22px; margin: 16px 0; display: grid; gap: 8px; }
+.demo-quote { margin: 18px 0; padding: 16px 20px; border-left: 3px solid var(--teal); background: rgba(45,212,191,.06); border-radius: 0 12px 12px 0; color: var(--on-dark); font-size: 15.5px; }
+.demo-content .actions { margin-top: 22px; }
+.demo-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line-dark); color: var(--on-dark-3); font-family: var(--mono); font-size: 12.5px; }
+.demo-tip { margin-top: 30px; padding: 20px 24px; border-radius: 16px; border: 1px solid rgba(245,184,74,.3); background: rgba(245,184,74,.06); }
+.demo-tip b { color: var(--amber); display: block; margin-bottom: 6px; }
+.demo-tip p { color: var(--on-dark-2); font-size: 14px; }
+@media (max-width: 900px) { .demo-layout { grid-template-columns: 1fr; } .demo-nav { position: static; grid-template-columns: 1fr 1fr; } .demo-content { padding: 22px; } }

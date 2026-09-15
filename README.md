@@ -23,7 +23,7 @@ npm start        # http://localhost:4178
                  #   /app        workbench: dashboard, tests, instruments, new test, users
                  #   /standards  rule-set explorer and MPE calculator
                  #   /verify/<certificate number>   public certificate check
-npm test         # 47 cases, all hand-worked from the standard
+npm test         # 59 cases, all hand-worked from the standard
 ```
 
 PDF export needs a Chromium-based browser on the machine (`CHROME_PATH` if not auto-detected).
@@ -69,6 +69,16 @@ the audit trail. Sessions are `HttpOnly` cookies over scrypt-hashed passwords.
 **Repository.** Every test is kept and searchable by reference, certificate, applicant,
 manufacturer, model, serial, status, outcome, class, purpose and date, with per-instrument history.
 
+**Multi-interval and multiple-range instruments.** Up to three partial weighing ranges, each
+classified on its own; the MPE, the changeover step and the discrimination weight follow the
+range the load falls in (3.2.2, 3.2.3).
+
+**CSV in and out.** Observations export to CSV, and spreadsheets in the same layout import
+through the same validation as the forms, with a row-by-row account of what was rejected and why.
+
+**QR-verified certificates.** Certificate and report carry a QR code of the public verification
+address; the code is generated in-house.
+
 **Exports.** The R 76-2 style report as HTML, PDF and an editable Word document (written
 without external libraries), the raw record as JSON, photographs embedded, and the certificate
 as HTML and PDF.
@@ -95,6 +105,7 @@ src/auth.js          scrypt passwords, cookie sessions, roles
 src/server.js        HTTP API and pages
 src/report.js        HTML report        src/documents.js + src/docx.js   Word report
 src/certificate.js   certificate        src/pdf.js                        PDF via headless Chromium
+src/qr.js            QR encoder (no dependencies)
 src/seed.js          worked examples
 public/              overview, login, workbench, rule-set explorer
                      chart.js draws the MPE envelope; readout.js draws the LCD and the MPE gauge
@@ -108,3 +119,9 @@ Every constant in `rulesets/oiml-r76-2006.json` carries the clause it comes from
 checked against OIML R 76-1, Edition 2006 (E). The report follows the column semantics of
 R 76-2, Edition 2007 (E). Electromagnetic disturbance tests (5.4.3, Annex B.3) are recorded from
 laboratory test sheets and not computed by this system.
+
+## Presentation experience
+
+The redesigned public homepage includes an interactive pass/fail example. Open `/demo.html` for the five-minute walkthrough, `/app#account` for password settings, and the Tests view for a filtered CSV register export. Branding assets and fonts are served locally.
+
+See [presentation and browser verification](docs/presentation.md) for the visual system, demo narrative and disposable-database browser test instructions.

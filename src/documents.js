@@ -89,8 +89,9 @@ function reportBlocks({ session, instrument, ruleset, evaluation, environment = 
     ['Interfaces', instrument.interfaces || '—'],
     ['Accuracy class', `${instrument.accuracyClass} — ${c.designation}`],
     ['Max / Min', `${f(instrument.max, u)} / ${f(instrument.min, u)}`],
-    ['e / d', `${f(instrument.e, u)} / ${f(instrument.d, u)}`],
-    ['n = Max / e', `${f(c.n)}${c.withinRange ? '' : ' (outside permitted range)'}`],
+    ...(c.multiRange
+      ? c.ranges.map((r) => [`Partial range ${r.index + 1}`, `e = ${f(r.e, u)}, d = ${f(r.d, u)}, up to ${f(r.max, u)}, n = ${f(r.n)}${r.withinRange ? '' : ' (outside permitted range)'}`])
+      : [['e / d', `${f(instrument.e, u)} / ${f(instrument.d, u)}`], ['n = Max / e', `${f(c.n)}${c.withinRange ? '' : ' (outside permitted range)'}`]]),
     ['Rounding elimination', c.changeoverRequired ? 'required (d > 0.2 e)' : 'not required'],
     ['Tare, additive / subtractive', `${instrument.tareMaxAdditive ? `T = +${f(instrument.tareMaxAdditive, u)}` : '—'} / ${instrument.tareMaxSubtractive ? `T = −${f(instrument.tareMaxSubtractive, u)}` : '—'}`],
     ['Temperature limits', `${f(c.temperature.min, '°C')} / ${f(c.temperature.max, '°C')} (${c.temperature.special ? 'marked, 3.9.2.2' : 'default, 3.9.2.1'})`],
